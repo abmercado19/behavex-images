@@ -1,2 +1,2 @@
 # behavex-images
-Library for generating screenshots on Behavex reports
+Library for generating the screenshots section in Behavex reports
