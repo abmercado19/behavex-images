@@ -20,11 +20,11 @@ setup(
     # Application name:
     name='behavex-images',
     # Version number (initial):
-    version='3.0.0',
+    version='3.0.1',
     # Application author details:
     author='Hernan Rey,Ana Mercado',
     author_email='hernanrey@gmail.com,abmercado19@gmail.com',
-    url='',
+    url='https://github.com/abmercado19/behavex-images',
     platforms=['any'],
     # Packages
     packages=[
