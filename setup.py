@@ -12,6 +12,10 @@ class Install(_install):
         _install.run(self)
 
 
+with open('README.md', 'r') as fh:
+    long_description = fh.read()
+
+
 setup(
     # Application name:
     name='behavex-images',
@@ -31,8 +35,9 @@ setup(
     ],
     # Include additional files into the package
     include_package_data=True,
-    license="LICENSE.txt",
     description='Library for generating the screenshots section in Behavex reports',
+    long_description=long_description,
+    long_description_content_type='text/markdown',
     install_requires=[
         'behave',
         'behavex',

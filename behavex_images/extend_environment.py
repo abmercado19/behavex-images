@@ -105,7 +105,7 @@ def before_step(context, step):
 def after_step(context, step):
     try:
         if context.bhx_inside_scenario:
-            from features.behavex_images.utils.screenshots import screenshots
+            from behavex_images.utils.screenshots import screenshots
 
             screenshots.capture_browser_image(
                 context, step=normalize_filename(step.name)
@@ -121,7 +121,7 @@ def after_scenario(context, scenario):
             and context.capture_screens_after_step is True
             or scenario.status == 'failed'
         ):
-            from features.behavex_images.utils.screenshots import screenshots
+            from behavex_images.utils.screenshots import screenshots
 
             screenshots.dump_screens(context)
             captions = screenshots.get_captions(context)
