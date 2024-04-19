@@ -20,9 +20,9 @@ setup(
     # Application name:
     name='behavex-images',
     # Version number (initial):
-    version='3.0.1',
+    version='3.0.2',
     # Application author details:
-    author='Hernan Rey,Ana Mercado',
+    author='Hernan Rey, Ana Mercado',
     author_email='hernanrey@gmail.com,abmercado19@gmail.com',
     url='https://github.com/abmercado19/behavex-images',
     platforms=['any'],
@@ -44,6 +44,7 @@ setup(
         'selenium',
         'numpy',
         'pillow',
+        'python-magic',
     ],
     cmdclass={'install': Install},
 )

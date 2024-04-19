@@ -11,18 +11,18 @@ import logging
 import os
 import re
 import xml.etree.ElementTree as ET
+import magic
 from io import BytesIO
 
 import selenium
 from PIL import Image
 
-from . import image_hash
+from behavex_images.images import attach_image_from_binary
+from behavex_images.utils import image_hash
 
-FWK_DIR = os.environ.get('BEHAVEX_PATH')
 
-
-def generate_gallery(folder, title='BehaveX', captions={}):
-    """generate_gallery screenshots"""
+def create_gallery(folder, title='BehaveX', captions={}):
+    """generate_gallery from already provided images"""
     # Create HTML
     root = ET.Element('html', {'style': 'height: 100%'})
     head = ET.SubElement(root, 'head')
@@ -112,12 +112,12 @@ def _create_image_html(captions, container, folder, root):
             tree.write(screenshots_gallery)
 
 
-def dump_screens(context):
+def dump_images_to_disk(context):
     """Dump screens"""
     if not context.bhx_captured_screens:
         return
     for key in context.bhx_captured_screens:
-        save_image(
+        write_image_binary_to_file(
             context.bhx_captured_screens[key]['name'],
             context.bhx_captured_screens[key]['img_stream'],
         )
@@ -153,7 +153,7 @@ def capture_browser_image(context, step=''):
                 step = _normalize_log(log_line)
                 context.bhx_previous_steps.append(step)
             context.bhx_log_stream.truncate(0)
-        add_image(context)
+        add_image_to_report_story(context)
         del image_stream
 
 
@@ -171,7 +171,7 @@ def _normalize_log(log_line):
     return step
 
 
-def add_image(context):
+def add_image_to_report_story(context):
     """Add image"""
     if context.bhx_image_stream:
         key = str(context.bhx_capture_screens_number).zfill(4)
@@ -197,11 +197,11 @@ def get_browser_image(context):
     return image_stream
 
 
-def save_image(filename, image_stream):
+def write_image_binary_to_file(output_filename, image_binary):
     """Save image"""
     try:
-        with open(filename, 'wb') as image_file:
-            image_file.write(image_stream)
+        with open(output_filename, 'wb') as image_file:
+            image_file.write(image_binary)
     except IOError:
         return False
     return True

@@ -94,7 +94,7 @@ def before_scenario(context, scenario):
         logging.getLogger().addHandler(context.bhx_step_log_handler)
     except Exception as ex:
         bhx_benv._log_exception_and_continue(
-            'before_scenario (behavex-web)', exception=ex
+            'before_scenario (behavex-images)', exception=ex
         )
 
 
@@ -105,9 +105,9 @@ def before_step(context, step):
 def after_step(context, step):
     try:
         if context.bhx_inside_scenario:
-            from behavex_images.utils.screenshots import screenshots
+            from report.behavex_images import images_report
 
-            screenshots.capture_browser_image(
+            images_report.capture_browser_image(
                 context, step=normalize_filename(step.name)
             )
     except Exception as ex:
@@ -121,11 +121,11 @@ def after_scenario(context, scenario):
             and context.capture_screens_after_step is True
             or scenario.status == 'failed'
         ):
-            from behavex_images.utils.screenshots import screenshots
+            from report.behavex_images import images_report
 
-            screenshots.dump_screens(context)
-            captions = screenshots.get_captions(context)
-            screenshots.generate_gallery(
+            images_report.dump_images_to_disk(context)
+            captions = images_report.get_captions(context)
+            images_report.create_gallery(
                 context.bhx_capture_screens_folder,
                 title=scenario.name,
                 captions=captions,
@@ -133,7 +133,7 @@ def after_scenario(context, scenario):
         _close_log_handler(context.bhx_step_log_handler)
     except Exception as ex:
         bhx_benv._log_exception_and_continue(
-            'after_scenario (behavex-web)', exception=ex
+            'after_scenario (behavex-images)', exception=ex
         )
 
 
@@ -149,7 +149,7 @@ def _copy_screenshot_utilities():
     destination_path = os.path.join(os.getenv('LOGS'), 'screenshots_utils')
     if not os.path.exists(destination_path):
         current_path = os.path.dirname(os.path.abspath(__file__))
-        screenshots_path = [current_path, 'utils', 'screenshots', 'support_files']
+        screenshots_path = [current_path, 'utils', 'support_files']
         screenshots_path = os.path.join(*screenshots_path)
         if os.path.exists(destination_path):
             try_operate_descriptor(
