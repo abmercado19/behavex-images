@@ -22,8 +22,17 @@ from behavex_images.utils import image_hash
 
 
 def create_gallery(folder, title='BehaveX', captions={}):
-    """generate_gallery from already provided images"""
-    # Create HTML
+    """
+    This function creates an HTML gallery of images from a specified folder.
+
+    Parameters:
+    folder (str): The path to the folder containing the images.
+    title (str, optional): The title of the gallery. Defaults to 'BehaveX'.
+    captions (dict, optional): A dictionary where the keys are the image filenames (without extension) and the values are the captions for the images. Defaults to an empty dictionary.
+
+    Returns:
+    None
+    """
     root = ET.Element('html', {'style': 'height: 100%'})
     head = ET.SubElement(root, 'head')
     script = ET.SubElement(
@@ -65,11 +74,22 @@ def create_gallery(folder, title='BehaveX', captions={}):
     folder = os.path.abspath(folder)
 
     container = ET.SubElement(body, 'div', {'style': 'height: 100%'})
-    _create_image_html(captions, container, folder, root)
+    create_images_html_file(captions, container, folder, root)
 
 
-def _create_image_html(captions, container, folder, root):
-    """Create image for html"""
+def create_images_html_file(captions, container, folder, root):
+    """
+    This function creates an HTML file that contains all the images in a specified folder.
+
+    Parameters:
+    captions (dict): A dictionary where the keys are the image filenames (without extension) and the values are the captions for the images.
+    container (Element): The parent element in the HTML structure where the images will be added.
+    folder (str): The path to the folder containing the images.
+    root (Element): The root element of the HTML structure.
+
+    Returns:
+    None
+    """
     pictures_found = False
     for file_ in sorted(os.listdir(folder)):
         if file_.endswith('.png'):
@@ -105,15 +125,21 @@ def _create_image_html(captions, container, folder, root):
     if pictures_found:
         tree = ET.ElementTree(root)
         # unicode has been changed to binary
-        with open(
-            os.path.join(os.path.abspath(folder), 'images.html'), 'wb'
-        ) as screenshots_gallery:
-            screenshots_gallery.write(b'<!DOCTYPE html>')
-            tree.write(screenshots_gallery)
+        with open(os.path.join(os.path.abspath(folder), 'images.html'), 'wb') as html_gallery:
+            html_gallery.write(b'<!DOCTYPE html>')
+            tree.write(html_gallery)
 
 
 def dump_images_to_disk(context):
-    """Dump screens"""
+    """
+    This function dumps all the images stored in the context object to the disk.
+
+    Parameters:
+    context (object): The context object which contains the images to be dumped.
+
+    Returns:
+    None
+    """
     if not context.bhx_captured_screens:
         return
     for key in context.bhx_captured_screens:
@@ -124,7 +150,15 @@ def dump_images_to_disk(context):
 
 
 def get_captions(context):
-    """Get captions"""
+    """
+    This function retrieves the captions for the images stored in the context object.
+
+    Parameters:
+    context (object): The context object which contains the images and their corresponding captions.
+
+    Returns:
+    dict: A dictionary where the keys are the image filenames (without extension) and the values are the captions for the images.
+    """
     captions = {}
     for key in context.bhx_captured_screens:
         captions[key] = context.bhx_captured_screens[key]['steps']
@@ -132,7 +166,16 @@ def get_captions(context):
 
 
 def capture_browser_image(context, step=''):
-    """Capture image of browser"""
+    """
+    This function captures an image of the browser and processes it.
+
+    Parameters:
+    context (object): The context object which contains various attributes used in the function.
+    step (str): The step string, default is an empty string.
+
+    Returns:
+    None
+    """
     image_stream = get_browser_image(context)
     if image_stream:
         try:
@@ -150,15 +193,23 @@ def capture_browser_image(context, step=''):
         context.bhx_image_stream = image_stream
         if not context.bhx_log_stream.closed:
             for log_line in context.bhx_log_stream.getvalue().splitlines(True):
-                step = _normalize_log(log_line)
+                step = normalize_log(log_line)
                 context.bhx_previous_steps.append(step)
             context.bhx_log_stream.truncate(0)
         add_image_to_report_story(context)
         del image_stream
 
 
-def _normalize_log(log_line):
-    """Normalize log"""
+def normalize_log(log_line):
+    """
+    This function normalizes a log line by removing null characters and extracting the step from the line.
+
+    Parameters:
+    log_line (str): The log line to be normalized.
+
+    Returns:
+    str: The normalized log line.
+    """
     log_line = log_line.replace('\0', '')
     pattern = re.compile(r'(given|when|then) \"(?P<step>.*)\"', re.MULTILINE)
     line = pattern.search(log_line)
@@ -172,7 +223,15 @@ def _normalize_log(log_line):
 
 
 def add_image_to_report_story(context):
-    """Add image"""
+    """
+    This function adds an image to the report story.
+
+    Parameters:
+    context (object): The context object which contains various attributes used in the function, including the image stream.
+
+    Returns:
+    None
+    """
     if context.bhx_image_stream:
         key = str(context.bhx_capture_screens_number).zfill(4)
         name = os.path.join(context.bhx_capture_screens_folder, key) + '.png'
@@ -184,7 +243,15 @@ def add_image_to_report_story(context):
 
 
 def get_browser_image(context):
-    """Get browser image"""
+    """
+    This function retrieves an image from the browser.
+
+    Parameters:
+    context (object): The context object which contains the browser from which the image will be retrieved.
+
+    Returns:
+    bytes: The image retrieved from the browser in the form of a byte stream. If the image cannot be retrieved, None is returned.
+    """
     image_stream = None
     for browser in context.browsers.values():
         try:
@@ -198,7 +265,16 @@ def get_browser_image(context):
 
 
 def write_image_binary_to_file(output_filename, image_binary):
-    """Save image"""
+    """
+    This function writes an image binary to a file.
+
+    Parameters:
+    output_filename (str): The name of the output file where the image binary will be written.
+    image_binary (bytes): The image binary to be written to the file.
+
+    Returns:
+    bool: True if the image binary was successfully written to the file, False otherwise.
+    """
     try:
         with open(output_filename, 'wb') as image_file:
             image_file.write(image_binary)

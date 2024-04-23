@@ -1,12 +1,32 @@
 from __future__ import absolute_import, print_function
 
-from report.behavex_images.images_report import _normalize_log, add_image
+from report.images_report import _normalize_log, add_image
 from behavex_images.utils import image_hash
 
 
 def attach_image_from_binary(context, image_binary):
-    """Attach image from binary data to test execution report
-    image_binary: binary data of the image to be attached
+    """
+    This function attaches an image from binary data to the test execution report.
+
+    It first checks if the binary data is not empty. If it is, it uses the magic library to determine the format of the image.
+    If the format is not JPG or PNG, it raises an exception.
+
+    If the format is JPG, it converts the image to PNG format and updates the binary data.
+
+    If the format is PNG, it calculates the hash of the image and compares it with the hash of the previous image.
+    If the hashes are different, it increments the counter of captured screens and resets the list of previous steps.
+
+    It then updates the hash and binary data of the image in the context, and if the log stream is not closed,
+    it appends the normalized log lines to the list of previous steps and truncates the log stream.
+
+    Finally, it adds the image to the context and deletes the binary data.
+
+    Parameters:
+    context (object): The context object which contains various attributes used in the function.
+    image_binary (bytes): The binary data of the image to be attached.
+
+    Returns:
+    None
     """
     if image_binary:
         mime = magic.Magic(mime=True)
@@ -44,8 +64,23 @@ def attach_image_from_binary(context, image_binary):
 
 
 def attach_image_from_file(context, file_path):
-    """Attach image from a file to test execution report
-    file_path: absolute path to the image file to be attached
+    """
+    This function attaches an image from a file to the test execution report.
+
+    It first checks if the file exists at the given path. If it does not, it raises an exception.
+
+    If the file exists, it checks the file extension. If the extension is not JPG or PNG, it raises an exception.
+
+    It then opens the file in binary mode. If the file is a JPG, it converts the image to PNG format and updates the binary data. If the file is a PNG, it reads the binary data from the file.
+
+    Finally, it calls the function 'attach_image_from_binary' with the context and the binary data as arguments.
+
+    Parameters:
+    context (object): The context object which contains various attributes used in the function.
+    file_path (str): The absolute path to the image file to be attached.
+
+    Returns:
+    None
     """
     if os.path.isfile(file_path):
         file_extension = os.path.splitext(file_path)[1]
