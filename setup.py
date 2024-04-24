@@ -29,13 +29,13 @@ setup(
     # Packages
     packages=[
         'behavex_images',
+        'behavex_images.report',
         'behavex_images.utils',
-        'behavex_images.utils.screenshots',
-        'behavex_images.utils.screenshots.support_files',
+        'behavex_images.utils.support_files',
     ],
     # Include additional files into the package
     include_package_data=True,
-    description='Library for generating the screenshots section in Behavex reports',
+    description='BehaveX extension library to attach images to the test execution report.',
     long_description=long_description,
     long_description_content_type='text/markdown',
     install_requires=[
@@ -44,7 +44,6 @@ setup(
         'selenium',
         'numpy',
         'pillow',
-        'python-magic',
     ],
     cmdclass={'install': Install},
 )

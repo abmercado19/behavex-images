@@ -1,25 +1,22 @@
-from __future__ import absolute_import, print_function
+import selenium
 
-from report.images_report import _normalize_log, add_image
-from behavex_images.utils import image_hash
+from behavex_images.report.images_report import normalize_log, add_image_to_report_story
+from behavex_images.utils import image_hash, image_format
 
 
-def attach_image_from_binary(context, image_binary):
+def attach_image_binary_to_report(context, image_binary):
     """
     This function attaches an image from binary data to the test execution report.
 
-    It first checks if the binary data is not empty. If it is, it uses the magic library to determine the format of the image.
-    If the format is not JPG or PNG, it raises an exception.
+    It first checks if the binary data is not None. If it is None, it does nothing.
 
-    If the format is JPG, it converts the image to PNG format and updates the binary data.
+    If the binary data is not None, it checks the format of the image. If the format is not PNG or JPEG, it raises an exception.
 
-    If the format is PNG, it calculates the hash of the image and compares it with the hash of the previous image.
-    If the hashes are different, it increments the counter of captured screens and resets the list of previous steps.
+    If the image is in JPEG format, it converts the image to PNG format and updates the binary data.
 
-    It then updates the hash and binary data of the image in the context, and if the log stream is not closed,
-    it appends the normalized log lines to the list of previous steps and truncates the log stream.
+    If the image is in PNG format, it calculates the hash of the image and updates the context with the hash and the binary data. It also updates the context with the log stream and the previous steps.
 
-    Finally, it adds the image to the context and deletes the binary data.
+    If the image is not in PNG format and could not be converted to PNG, it raises an exception.
 
     Parameters:
     context (object): The context object which contains various attributes used in the function.
@@ -29,16 +26,15 @@ def attach_image_from_binary(context, image_binary):
     None
     """
     if image_binary:
-        mime = magic.Magic(mime=True)
-        image_binary_format = mime.from_buffer(image_binary)
-        if image_binary_format not in ['image/jpg', 'image/png']:
+        image_binary_format = image_format.get_image_format(image_binary)
+        if image_binary_format not in ['PNG', 'JPEG']:
             raise Exception('The provided binary data is not a valid PNG or JPG image.')
-        if image_binary_format == 'image/jpg':
+        if image_binary_format == 'JPEG':
             png_binary_data = BytesIO()
             image.save(image_binary, format='PNG')
             png_binary_data.seek(0)
             image_binary = png_binary_data.read()
-        if image_binary_format == 'image/png':
+        if image_binary_format == 'PNG':
             try:
                 image_stream_hash = image_hash.dhash(Image.open(BytesIO(image_binary)))
                 if (
@@ -57,13 +53,13 @@ def attach_image_from_binary(context, image_binary):
                     step = _normalize_log(log_line)
                     context.bhx_previous_steps.append(step)
                 context.bhx_log_stream.truncate(0)
-            add_image(context)
+            add_image_to_report_story(context)
             del image_binary
         else:
             raise Exception('The provided binary data is not a valid PNG image, or could not be converted to PNG.')
 
 
-def attach_image_from_file(context, file_path):
+def attach_image_file_to_report(context, file_path):
     """
     This function attaches an image from a file to the test execution report.
 
@@ -93,6 +89,29 @@ def attach_image_from_file(context, file_path):
                 png_binary_data.seek(0)
             else:
                 png_binary_data = image_file.read()
-            attach_image_from_binary(context, png_binary_data)
+            attach_image_binary_to_report(context, png_binary_data)
     else:
         raise Exception('The provided file cannot be found at the specified path:  %s' % file_path)
+
+
+def get_browser_image(context):
+    """
+    This function retrieves an image from the browser.
+
+    Parameters:
+    context (object): The context object which contains the browser from which the image will be retrieved.
+
+    Returns:
+    bytes: The image retrieved from the browser in the form of a byte stream. If the image cannot be retrieved, None is returned.
+    """
+    image_stream = None
+    for browser in context.browsers.values():
+        try:
+            image_stream = browser.driver.get_screenshot_as_png()
+            attach_image_from_binary(context, image_stream)
+        except selenium.common.exceptions.WebDriverException as exception:
+            print(exception)
+            logging.error('could not save_screenshot')
+            # pickle.dump(
+            # browser.driver.page_source.encode(encoding='UTF-8'), log)
+    return image_stream

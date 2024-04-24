@@ -14,10 +14,8 @@ import xml.etree.ElementTree as ET
 import magic
 from io import BytesIO
 
-import selenium
 from PIL import Image
 
-from behavex_images.images import attach_image_from_binary
 from behavex_images.utils import image_hash
 
 
@@ -240,28 +238,6 @@ def add_image_to_report_story(context):
             'name': name,
             'steps': context.bhx_previous_steps,
         }
-
-
-def get_browser_image(context):
-    """
-    This function retrieves an image from the browser.
-
-    Parameters:
-    context (object): The context object which contains the browser from which the image will be retrieved.
-
-    Returns:
-    bytes: The image retrieved from the browser in the form of a byte stream. If the image cannot be retrieved, None is returned.
-    """
-    image_stream = None
-    for browser in context.browsers.values():
-        try:
-            image_stream = browser.driver.get_screenshot_as_png()
-        except selenium.common.exceptions.WebDriverException as exception:
-            print(exception)
-            logging.error('could not save_screenshot')
-            # pickle.dump(
-            # browser.driver.page_source.encode(encoding='UTF-8'), log)
-    return image_stream
 
 
 def write_image_binary_to_file(output_filename, image_binary):
