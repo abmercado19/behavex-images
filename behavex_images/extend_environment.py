@@ -9,6 +9,8 @@ from behavex import environment as bhx_benv
 from behavex.outputs.report_utils import normalize_filename
 from behavex.utils import try_operate_descriptor
 
+from behavex_images.utils.report_utils import PublishCondition
+from behavex_images.utils import report_utils
 
 # cStringIO has been changed to StringIO or io
 try:
@@ -113,7 +115,7 @@ def before_scenario(context, scenario):
     """
     This function is executed before each scenario is run.
 
-    It sets up the initial configuration for capturing screenshots and logging. It also adds a new log handler to the logger.
+    It sets up the initial configuration for attaching images to the report. It also adds a new log handler to the logger.
 
     Parameters:
     context (object): The context object which contains various attributes used in the function.
@@ -123,24 +125,21 @@ def before_scenario(context, scenario):
     None
     """
     try:
-        # Setup initial configuration for capturing screenshots
-        context.capture_screens_after_step = False
-        context.bhx_image_hash = None
-        context.bhx_capture_screens_folder = context.log_path
-        context.bhx_capture_screens_number = 0
-        context.bhx_captured_screens = {}
-        context.bhx_previous_steps = []
-        context.bhx_image_stream = None
-        context.bhx_log_stream = StringIO()
-        context.bhx_step_log_handler = logging.StreamHandler(context.bhx_log_stream)
+        # Setup initial configuration for attaching images and logging
+        context.bhximgs_image_hash = None
+        context.bhximgs_attached_images_folder = context.log_path
+        context.bhximgs_attached_images_idx = 0
+        context.bhximgs_attached_images = {}
+        context.bhximgs_previous_steps = []
+        context.bhximgs_image_stream = None
+        context.bhximgs_log_stream = StringIO()
+        context.bhximgs_step_log_handler = logging.StreamHandler(context.bhximgs_log_stream)
 
         # Adding a new log handler to logger
-        context.bhx_step_log_handler.setFormatter(bhx_benv._get_log_formatter())
-        logging.getLogger().addHandler(context.bhx_step_log_handler)
+        context.bhximgs_step_log_handler.setFormatter(bhx_benv._get_log_formatter())
+        logging.getLogger().addHandler(context.bhximgs_step_log_handler)
     except Exception as ex:
-        bhx_benv._log_exception_and_continue(
-            'before_scenario (behavex-images)', exception=ex
-        )
+        bhx_benv._log_exception_and_continue('before_scenario (behavex-images)', exception=ex)
 
 
 def before_step(context, step):
@@ -163,7 +162,7 @@ def after_step(context, step):
     """
     This function is executed after each step in a scenario is run.
 
-    If the context indicates that the scenario is running, it captures a browser image for the current step.
+    Currently, this function does not perform any operations. It can be used to set up any necessary state or perform any configuration that should be done after a step is run.
 
     Parameters:
     context (object): The context object which contains various attributes used in the function.
@@ -172,22 +171,14 @@ def after_step(context, step):
     Returns:
     None
     """
-    try:
-        if context.bhx_inside_scenario:
-            from report import images_report
-
-            images_report.capture_browser_image(
-                context, step=normalize_filename(step.name)
-            )
-    except Exception as ex:
-        bhx_benv._log_exception_and_continue('after_step (behavex-images)', exception=ex)
+    pass
 
 
 def after_scenario(context, scenario):
     """
     This function is executed after each scenario is run.
 
-    If the context indicates that screenshots should be captured after each step, or if the scenario has failed, it dumps the captured images to disk and creates a gallery of these images.
+    If the context indicates that images should be attached to the report, it dumps the captured images to disk and creates a gallery of these images.
 
     Parameters:
     context (object): The context object which contains various attributes used in the function.
@@ -197,25 +188,20 @@ def after_scenario(context, scenario):
     None
     """
     try:
-        if (
-            hasattr(context, 'capture_screens_after_step')
-            and context.capture_screens_after_step is True
-            or scenario.status == 'failed'
+        if ("bhximgs_publish_condition" in context and
+                ((context.bhximgs_publish_condition == PublishCondition.ALWAYS) or
+                 (context.bhximgs_publish_condition == PublishCondition.ONLY_ON_FAILURE and scenario.status == 'failed'))
         ):
-            from report import images_report
-
-            images_report.dump_images_to_disk(context)
-            captions = images_report.get_captions(context)
-            images_report.create_gallery(
-                context.bhx_capture_screens_folder,
+            report_utils.dump_images_to_disk(context)
+            captions = report_utils.get_captions(context)
+            report_utils.create_gallery(
+                context.bhximgs_attached_images_folder,
                 title=scenario.name,
                 captions=captions,
             )
-        close_log_handler(context.bhx_step_log_handler)
+        close_log_handler(context.bhximgs_step_log_handler)
     except Exception as ex:
-        bhx_benv._log_exception_and_continue(
-            'after_scenario (behavex-images)', exception=ex
-        )
+        bhx_benv._log_exception_and_continue('after_scenario (behavex-images)', exception=ex)
 
 
 def after_feature(context, feature):
@@ -248,6 +234,7 @@ def after_all(context):
     """
     pass
 
+
 def copy_gallery_utilities():
     """
     This function copies the gallery utilities to the appropriate location.
@@ -260,18 +247,18 @@ def copy_gallery_utilities():
     Returns:
     None
     """
-    destination_path = os.path.join(os.getenv('LOGS'), 'screenshots_utils')
+    destination_path = os.path.join(os.getenv('LOGS'), 'image_attachments_utils')
     if not os.path.exists(destination_path):
         current_path = os.path.dirname(os.path.abspath(__file__))
-        screenshots_path = [current_path, 'utils', 'support_files']
-        screenshots_path = os.path.join(*screenshots_path)
+        image_attachments_path = [current_path, 'utils', 'support_files']
+        image_attachments_path = os.path.join(*image_attachments_path)
         if os.path.exists(destination_path):
             try_operate_descriptor(
                 destination_path, lambda: shutil.rmtree(destination_path)
             )
 
         def execution():
-            return shutil.copytree(screenshots_path, destination_path)
+            return shutil.copytree(image_attachments_path, destination_path)
 
         try_operate_descriptor(destination_path, execution)
 

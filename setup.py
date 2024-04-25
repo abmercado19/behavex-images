@@ -29,7 +29,6 @@ setup(
     # Packages
     packages=[
         'behavex_images',
-        'behavex_images.report',
         'behavex_images.utils',
         'behavex_images.utils.support_files',
     ],
@@ -41,7 +40,6 @@ setup(
     install_requires=[
         'behave',
         'behavex',
-        'selenium',
         'numpy',
         'pillow',
     ],

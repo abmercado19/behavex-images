@@ -7,16 +7,24 @@ BehaveX - BDD testing library based on Behave
 # __future__ has been added in order to maintain compatibility
 from __future__ import absolute_import, print_function
 
-import logging
 import os
 import re
+from enum import Enum
 import xml.etree.ElementTree as ET
-import magic
-from io import BytesIO
 
-from PIL import Image
 
-from behavex_images.utils import image_hash
+class PublishCondition(Enum):
+    """
+    This is an enumeration class that defines the conditions under which a report should be published.
+
+    Attributes:
+    ALWAYS (str): The report should always be published.
+    ONLY_ON_FAILURE (str): The report should only be published if there is a test failure.
+    NEVER (str): The report should never be published.
+    """
+    ALWAYS = "always"
+    ONLY_ON_FAILURE = "only_on_failure"
+    NEVER = "never"
 
 
 def create_gallery(folder, title='BehaveX', captions={}):
@@ -41,7 +49,7 @@ def create_gallery(folder, title='BehaveX', captions={}):
         head,
         'script',
         {
-            'src': '../screenshots_utils/jquery-1.11.0.' 'min.js',
+            'src': '../image_attachments_utils/jquery-1.11.0.' 'min.js',
             'type': 'text/javascript',
         },
     )
@@ -49,11 +57,11 @@ def create_gallery(folder, title='BehaveX', captions={}):
     script = ET.SubElement(
         head,
         'script',
-        {'src': '../screenshots_utils/lightbox.js', 'type': 'text/javascript'},
+        {'src': '../image_attachments_utils/lightbox.js', 'type': 'text/javascript'},
     )
     script.text = ' '
     ET.SubElement(
-        head, 'link', {'rel': 'stylesheet', 'href': '../screenshots_utils/lightbox.css'}
+        head, 'link', {'rel': 'stylesheet', 'href': '../image_attachments_utils/lightbox.css'}
     )
     head_title = ET.SubElement(head, 'title')
     head_title.text = title
@@ -138,12 +146,12 @@ def dump_images_to_disk(context):
     Returns:
     None
     """
-    if not context.bhx_captured_screens:
+    if not context.bhximgs_attached_images:
         return
-    for key in context.bhx_captured_screens:
+    for key in context.bhximgs_attached_images:
         write_image_binary_to_file(
-            context.bhx_captured_screens[key]['name'],
-            context.bhx_captured_screens[key]['img_stream'],
+            context.bhximgs_attached_images[key]['name'],
+            context.bhximgs_attached_images[key]['img_stream'],
         )
 
 
@@ -158,47 +166,12 @@ def get_captions(context):
     dict: A dictionary where the keys are the image filenames (without extension) and the values are the captions for the images.
     """
     captions = {}
-    for key in context.bhx_captured_screens:
-        captions[key] = context.bhx_captured_screens[key]['steps']
+    for key in context.bhximgs_attached_images:
+        captions[key] = context.bhximgs_attached_images[key]['steps']
     return captions
 
 
-def capture_browser_image(context, step=''):
-    """
-    This function captures an image of the browser and processes it.
-
-    Parameters:
-    context (object): The context object which contains various attributes used in the function.
-    step (str): The step string, default is an empty string.
-
-    Returns:
-    None
-    """
-    image_stream = get_browser_image(context)
-    if image_stream:
-        try:
-            image_stream_hash = image_hash.dhash(Image.open(BytesIO(image_stream)))
-            if (
-                not context.bhx_image_hash
-                or image_stream_hash != context.bhx_image_hash
-            ):
-                context.bhx_capture_screens_number += 1
-                context.bhx_previous_steps = []
-        except Exception as exception:
-            image_stream_hash = None
-            print(str(exception))
-        context.bhx_image_hash = image_stream_hash
-        context.bhx_image_stream = image_stream
-        if not context.bhx_log_stream.closed:
-            for log_line in context.bhx_log_stream.getvalue().splitlines(True):
-                step = normalize_log(log_line)
-                context.bhx_previous_steps.append(step)
-            context.bhx_log_stream.truncate(0)
-        add_image_to_report_story(context)
-        del image_stream
-
-
-def normalize_log(log_line):
+def normalize_log(log_line, line_breaks=1):
     """
     This function normalizes a log line by removing null characters and extracting the step from the line.
 
@@ -216,7 +189,8 @@ def normalize_log(log_line):
     else:
         step = log_line
     step = step.replace('<', '').replace('>', '')
-    step += '<br>'
+    for _ in range(line_breaks):
+        step += '<br>'
     return step
 
 
@@ -230,13 +204,13 @@ def add_image_to_report_story(context):
     Returns:
     None
     """
-    if context.bhx_image_stream:
-        key = str(context.bhx_capture_screens_number).zfill(4)
-        name = os.path.join(context.bhx_capture_screens_folder, key) + '.png'
-        context.bhx_captured_screens[key] = {
-            'img_stream': context.bhx_image_stream,
+    if context.bhximgs_image_stream:
+        key = str(context.bhximgs_attached_images_idx).zfill(4)
+        name = os.path.join(context.bhximgs_attached_images_folder, key) + '.png'
+        context.bhximgs_attached_images[key] = {
+            'img_stream': context.bhximgs_image_stream,
             'name': name,
-            'steps': context.bhx_previous_steps,
+            'steps': context.bhximgs_previous_steps,
         }
 
 

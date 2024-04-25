@@ -1,4 +1,4 @@
 # -*- coding: utf-8 -*-
 """
-This module is using for support in screenshots
+This module contains utility functions for managing image attachments in reports.
 """
