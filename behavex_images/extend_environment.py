@@ -9,7 +9,7 @@ from behavex import environment as bhx_benv
 from behavex.outputs.report_utils import normalize_filename
 from behavex.utils import try_operate_descriptor
 
-from behavex_images.utils.report_utils import PublishCondition
+from behavex_images.utils.report_utils import AttachmentsCondition
 from behavex_images.utils import report_utils
 
 # cStringIO has been changed to StringIO or io
@@ -188,9 +188,9 @@ def after_scenario(context, scenario):
     None
     """
     try:
-        if ("bhximgs_publish_condition" in context and
-                ((context.bhximgs_publish_condition == PublishCondition.ALWAYS) or
-                 (context.bhximgs_publish_condition == PublishCondition.ONLY_ON_FAILURE and scenario.status == 'failed'))
+        if ("bhximgs_attachments_condition" in context and
+                ((context.bhximgs_attachments_condition == AttachmentsCondition.ALWAYS) or
+                 (context.bhximgs_attachments_condition == AttachmentsCondition.ONLY_ON_FAILURE and scenario.status == 'failed'))
         ):
             report_utils.dump_images_to_disk(context)
             captions = report_utils.get_captions(context)

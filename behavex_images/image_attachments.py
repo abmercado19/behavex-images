@@ -2,18 +2,18 @@ import os
 import logging
 from PIL import Image
 from io import BytesIO
-from behavex_images.utils.report_utils import normalize_log, add_image_to_report_story, PublishCondition
+from behavex_images.utils.report_utils import normalize_log, add_image_to_report_story, AttachmentsCondition
 from behavex_images.utils import image_hash, image_format
 
 
-def add_image_binary_to_report(context, image_binary, header_text=None):
+def attach_image_binary(context, image_binary, header_text=None):
     """
-    This function is used to add an image, provided as binary data, to a report.
+    This function is used to attach an image binary to the execution report.
 
     Parameters:
     context (dict): A dictionary that holds the context of the current test execution.
-    image_binary (bytes): The binary data of the image to be added to the report.
-    header_text (str, optional): The header text to be added to the report. Defaults to None.
+    image_binary (bytes): The binary data of the image to be attached to the report.
+    header_text (str, optional): The header text associated to the image. Defaults to None.
 
     Returns:
     None
@@ -22,8 +22,8 @@ def add_image_binary_to_report(context, image_binary, header_text=None):
     Exception: If the provided binary data is not a valid PNG or JPG image.
     Exception: If it was not possible to add the image to the report.
     """
-    if "bhximgs_publish_condition" not in context:
-        context.bhximgs_publish_condition = PublishCondition.ALWAYS
+    if "bhximgs_attachments_condition" not in context:
+        context.bhximgs_attachments_condition = AttachmentsCondition.ALWAYS
     try:
         image_binary_format = image_format.get_image_format(image_binary)
         if image_binary_format not in ['PNG', 'JPEG']:
@@ -57,14 +57,14 @@ def add_image_binary_to_report(context, image_binary, header_text=None):
         logging.error('It was not possible to add the image to the report: %s' % str(exception))
 
 
-def add_image_file_to_report(context, file_path, header_text=None):
+def attach_image_file(context, file_path, header_text=None):
     """
-    This function is used to add an image, provided as a file, to a report.
+    This function is used to attach an image file to the execution report.
 
     Parameters:
     context (dict): A dictionary that holds the context of the current test execution.
     file_path (str): The path to the image file to be added to the report.
-    header_text (str, optional): The header text to be added to the report. Defaults to None.
+    header_text (str, optional): The header text associated to the image. Defaults to None.
 
     Returns:
     None
@@ -79,14 +79,14 @@ def add_image_file_to_report(context, file_path, header_text=None):
             raise Exception('The provided file format is not supported. Only PNG and JPG files can be attached.')
         with open(file_path, 'rb') as image_file:
             binary_data = image_file.read()
-            add_image_binary_to_report(context, binary_data, header_text)
+            attach_image_binary(context, binary_data, header_text)
     else:
         logging.error('The provided file cannot be found at the specified path:  %s' % file_path)
 
 
-def clean_all_report_images(context):
+def clean_all_attached_images(context):
     """
-    This function is used to clean all the images attached to a report.
+    This function is used to clean all the images associated to the test scenario being executed.
 
     Parameters:
     context (dict): A dictionary that holds the context of the current test execution.
@@ -100,15 +100,15 @@ def clean_all_report_images(context):
     context.bhximgs_log_stream.truncate(0)
 
 
-def set_publish_condition(context, condition: PublishCondition):
+def set_attachments_condition(context, attachments_condition: AttachmentsCondition):
     """
-    This function is used to set the publish condition for a report.
+    This function is used to set the condition for attaching the captured images to the execution report.
 
     Parameters:
     context (dict): A dictionary that holds the context of the current test execution
-    condition (PublishCondition): The condition under which the report should be published (PublishCondition.ALWAYS, PublishCondition.ON_FAILURE, PublishCondition.NEVER).
+    condition (AttachmentsCondition): The condition under which the images should be attached to the report (AttachmentsCondition.ALWAYS, AttachmentsCondition.ON_FAILURE, AttachmentsCondition.NEVER).
 
     Returns:
     None
     """
-    context.bhximgs_publish_condition = condition
+    context.bhximgs_attachments_condition = attachments_condition

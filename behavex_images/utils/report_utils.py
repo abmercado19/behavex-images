@@ -13,14 +13,14 @@ from enum import Enum
 import xml.etree.ElementTree as ET
 
 
-class PublishCondition(Enum):
+class AttachmentsCondition(Enum):
     """
-    This is an enumeration class that defines the conditions under which a report should be published.
+    This is an enumeration class that defines the conditions under which images should be attached to the report.
 
     Attributes:
-    ALWAYS (str): The report should always be published.
-    ONLY_ON_FAILURE (str): The report should only be published if there is a test failure.
-    NEVER (str): The report should never be published.
+    ALWAYS (str): The images should always be attached to the report for every test scenario.
+    ONLY_ON_FAILURE (str): The images should only be attached only to failing scenarios.
+    NEVER (str): The images should not be attached to the report.
     """
     ALWAYS = "always"
     ONLY_ON_FAILURE = "only_on_failure"
@@ -80,10 +80,10 @@ def create_gallery(folder, title='BehaveX', captions={}):
     folder = os.path.abspath(folder)
 
     container = ET.SubElement(body, 'div', {'style': 'height: 100%'})
-    create_images_html_file(captions, container, folder, root)
+    create_gallery_html_file(captions, container, folder, root)
 
 
-def create_images_html_file(captions, container, folder, root):
+def create_gallery_html_file(captions, container, folder, root):
     """
     This function creates an HTML file that contains all the images in a specified folder.
 

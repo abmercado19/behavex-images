@@ -23,7 +23,7 @@ setup(
     version='3.0.2',
     # Application author details:
     author='Hernan Rey, Ana Mercado',
-    author_email='hernanrey@gmail.com,abmercado19@gmail.com',
+    author_email='hernanrey@gmail.com, abmercado19@gmail.com',
     url='https://github.com/abmercado19/behavex-images',
     platforms=['any'],
     # Packages
