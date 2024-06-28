@@ -4,6 +4,10 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
+behave = "*"
+behavex = "*"
+numpy = "*"
+pillow = "*"
 
 [dev-packages]
 

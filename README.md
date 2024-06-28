@@ -11,7 +11,7 @@ The following methods are provided to manage image attachments in the BehaveX HT
     - This function attaches an image from binary data to the test execution report. It takes two parameters:
         - `context`: The context object which contains various attributes used in the function.
         - `image_binary`: The binary data of the image to be attached.
-    - The function determines the binary format to ensure it maps to a JPG, PNG or GIF image. Otherwise, it raises an exception.
+    - The function determines the binary format to ensure it maps to a JPG or PNG image. Otherwise, it raises an exception.
     - Then, it converts the image to PNG format (if it is not already in that format) to add it to the gallery.
 
 2. `attach_image_file(context, file_path)`
@@ -19,7 +19,7 @@ The following methods are provided to manage image attachments in the BehaveX HT
         - `context`: The context object which contains various attributes used in the function.
         - `file_path`: The absolute path to the image file to be attached.
     - The function first checks if the file exists at the given path. If it does not, it raises an exception.
-    - If the file exists, it checks the file extension. If the extension is not JPG, PNG or GIF, it raises an exception.
+    - If the file exists, it checks the file extension. If the extension is not JPG or PNG, it raises an exception.
     - Then, it converts the image to PNG format (if it is not already in that format) to add it to the gallery.
 
 3. `set_attachments_condition(context, condition)`
@@ -44,3 +44,16 @@ def step_impl(context):
     ...
     attach_image_from_file(context, 'path/to/image.png')
 ``` 
+
+```python
+from behave import *
+from behavex_images import set_publish_condition, attach_image_binary, PublishCondition
+
+def before_all(context):
+    ...
+    image_attachements.set_publish_condition(context, PublishCondition.ON_FAILURE)
+
+def after_step(context, step):
+    ...
+    image_attachements.attach_image_binary(context, selenium_driver.get_screenshot_as_png())
+```

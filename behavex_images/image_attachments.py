@@ -64,7 +64,7 @@ def attach_image_file(context, file_path, header_text=None):
     Parameters:
     context (dict): A dictionary that holds the context of the current test execution.
     file_path (str): The path to the image file to be added to the report.
-    header_text (str, optional): The header text associated to the image. Defaults to None.
+    header_text (str, optional): The header text associated to the image, that will be shown in the report. Defaults to None.
 
     Returns:
     None
