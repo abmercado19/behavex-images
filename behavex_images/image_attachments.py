@@ -2,7 +2,7 @@ import os
 import logging
 from PIL import Image
 from io import BytesIO
-from behavex_images.utils.report_utils import normalize_log, add_image_to_report_story, AttachmentsCondition
+from behavex_images.utils.report_utils import normalize_log, add_image_to_report_story
 from behavex_images.utils import image_hash, image_format
 
 
@@ -112,3 +112,17 @@ def set_attachments_condition(context, attachments_condition: AttachmentsConditi
     None
     """
     context.bhximgs_attachments_condition = attachments_condition
+
+
+class AttachmentsCondition(Enum):
+    """
+    This is an enumeration class that defines the conditions under which images should be attached to the report.
+
+    Attributes:
+    ALWAYS (str): The images should always be attached to the report for every test scenario.
+    ONLY_ON_FAILURE (str): The images should only be attached only to failing scenarios.
+    NEVER (str): The images should not be attached to the report.
+    """
+    ALWAYS = "always"
+    ONLY_ON_FAILURE = "only_on_failure"
+    NEVER = "never"

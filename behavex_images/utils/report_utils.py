@@ -13,20 +13,6 @@ from enum import Enum
 import xml.etree.ElementTree as ET
 
 
-class AttachmentsCondition(Enum):
-    """
-    This is an enumeration class that defines the conditions under which images should be attached to the report.
-
-    Attributes:
-    ALWAYS (str): The images should always be attached to the report for every test scenario.
-    ONLY_ON_FAILURE (str): The images should only be attached only to failing scenarios.
-    NEVER (str): The images should not be attached to the report.
-    """
-    ALWAYS = "always"
-    ONLY_ON_FAILURE = "only_on_failure"
-    NEVER = "never"
-
-
 def create_gallery(folder, title='BehaveX', captions={}):
     """
     This function creates an HTML gallery of images from a specified folder.

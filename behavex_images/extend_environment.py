@@ -9,7 +9,7 @@ from behavex import environment as bhx_benv
 from behavex.outputs.report_utils import normalize_filename
 from behavex.utils import try_operate_descriptor
 
-from behavex_images.utils.report_utils import AttachmentsCondition
+from behavex_images.image_attachments import AttachmentsCondition
 from behavex_images.utils import report_utils
 
 # cStringIO has been changed to StringIO or io
