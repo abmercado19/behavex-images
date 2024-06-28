@@ -23,7 +23,7 @@ def attach_image_binary(context, image_binary, header_text=None):
     Exception: If it was not possible to add the image to the report.
     """
     if "bhximgs_attachments_condition" not in context:
-        context.bhximgs_attachments_condition = AttachmentsCondition.ALWAYS
+        context.bhximgs_attachments_condition = AttachmentsCondition.ON_FAILURE
     try:
         image_binary_format = image_format.get_image_format(image_binary)
         if image_binary_format not in ['PNG', 'JPEG']:
