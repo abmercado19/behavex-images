@@ -1,5 +1,5 @@
 # behavex-images
-This implementation extends the BehaveX library to attach images to the generated HTML report
+This implementation extends the BehaveX library to enable attaching images to the generated HTML report
 
 ## Installation
 pip install behavex-images
