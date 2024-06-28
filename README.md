@@ -57,3 +57,10 @@ def after_step(context, step):
     ...
     image_attachements.attach_image_binary(context, selenium_driver.get_screenshot_as_png())
 ```
+
+
+![test execution report](https://github.com/abmercado19/behavex-images/blob/master/img/html_test_report.png?raw=true)
+
+![test execution report](https://github.com/abmercado19/behavex-images/blob/master/img/html_test_report_2.png?raw=true)
+
+![test execution report](https://github.com/abmercado19/behavex-images/blob/master/img/html_test_report_3.png?raw=true)
