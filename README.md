@@ -35,23 +35,26 @@ The following methods are provided to manage image attachments in the BehaveX HT
 
 These methods can be used from the hooks provided in the environment.py file, or directly from step definitions to attach images to the HTML report. For example:
 
+* Example 1: Attaching an image file from a step definition
 ```python
 from behave import *
-from behavex_images import attach_image_from_file
+from behavex_images import image_attachments
 
 @given('I take a screenshot from current page')
 def step_impl(context):
     ...
-    attach_image_from_file(context, 'path/to/image.png')
+    image_attachments.attach_image_file(context, 'path/to/image.png')
 ``` 
 
+* Example 2: Attaching an image binary from the `after_step` hook in environment.py
 ```python
 from behave import *
-from behavex_images import set_publish_condition, attach_image_binary, PublishCondition
+from behavex_images import image_attachments
+from behavex_images.image_attachments import AttachmentsCondition
 
 def before_all(context):
     ...
-    image_attachements.set_publish_condition(context, PublishCondition.ON_FAILURE)
+    image_attachements.set_attachments_condition(context, AttachmentsCondition.ONLY_ON_FAILURE)
 
 def after_step(context, step):
     ...
