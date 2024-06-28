@@ -37,7 +37,7 @@ These methods can be used from the hooks provided in the environment.py file, or
 
 * Example 1: Attaching an image file from a step definition
 ```python
-from behave import *
+...
 from behavex_images import image_attachments
 
 @given('I take a screenshot from current page')
@@ -48,7 +48,7 @@ def step_impl(context):
 
 * Example 2: Attaching an image binary from the `after_step` hook in environment.py
 ```python
-from behave import *
+...
 from behavex_images import image_attachments
 from behavex_images.image_attachments import AttachmentsCondition
 
