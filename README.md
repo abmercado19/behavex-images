@@ -59,8 +59,8 @@ def after_step(context, step):
 ```
 
 
-![test execution report](https://github.com/abmercado19/behavex-images/blob/master/img/html_test_report.png?raw=true)
+![test execution report](https://github.com/abmercado19/behavex-images/blob/master/behavex_images/img/html_test_report.png?raw=true)
 
-![test execution report](https://github.com/abmercado19/behavex-images/blob/master/img/html_test_report_2.png?raw=true)
+![test execution report](https://github.com/abmercado19/behavex-images/blob/master/behavex_images/img/html_test_report_2.png?raw=true)
 
-![test execution report](https://github.com/abmercado19/behavex-images/blob/master/img/html_test_report_3.png?raw=true)
+![test execution report](https://github.com/abmercado19/behavex-images/blob/master/behavex_images/img/html_test_report_3.png?raw=true)
