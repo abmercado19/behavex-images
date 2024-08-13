@@ -33,7 +33,8 @@ The following methods are provided to manage image attachments in the BehaveX HT
 4. `clean_all_attached_images`
     - This function removes all images already attached to the HTML report for the current test scenario.
 
-These methods can be used from the hooks provided in the environment.py file, or directly from step definitions to attach images to the HTML report. For example:
+## Examples
+The provided methods can be used from the hooks available in the environment.py file, or directly from step definitions to attach images to the HTML report. For example:
 
 * Example 1: Attaching an image file from a step definition
 ```python
