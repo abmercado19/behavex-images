@@ -33,31 +33,29 @@ The following methods are provided to manage image attachments in the BehaveX HT
 4. `clean_all_attached_images`
     - This function removes all images already attached to the HTML report for the current test scenario.
 
-These methods can be used from the hooks provided in the environment.py file, or directly from step definitions to attach images to the HTML report. For example:
+## Examples
+The provided methods can be used from the hooks available in the environment.py file, or directly from step definitions to attach images to the HTML report. For example:
 
-* Example 1: Attaching an image file from a step definition
+* **Example 1**: Attaching an image file from a step definition
 ```python
 ...
 from behavex_images import image_attachments
 
 @given('I take a screenshot from current page')
 def step_impl(context):
-    ...
     image_attachments.attach_image_file(context, 'path/to/image.png')
 ``` 
 
-* Example 2: Attaching an image binary from the `after_step` hook in environment.py
+* **Example 2**: Attaching an image binary from the `after_step` hook in environment.py
 ```python
 ...
 from behavex_images import image_attachments
 from behavex_images.image_attachments import AttachmentsCondition
 
 def before_all(context):
-    ...
     image_attachements.set_attachments_condition(context, AttachmentsCondition.ONLY_ON_FAILURE)
 
 def after_step(context, step):
-    ...
     image_attachements.attach_image_binary(context, selenium_driver.get_screenshot_as_png())
 ```
 

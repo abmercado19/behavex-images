@@ -34,16 +34,17 @@ def attach_image_binary(context, image_binary, header_text=None):
     Returns:
     None
 
-    Raises:
-    Exception: If the provided binary data is not a valid PNG or JPG image.
-    Exception: If it was not possible to add the image to the report.
+    Logs:
+    Error: If the provided binary data is not a valid PNG or JPG image.
+    Error: If it was not possible to add the image to the report.
     """
     if "bhximgs_attachments_condition" not in context:
         context.bhximgs_attachments_condition = AttachmentsCondition.ON_FAILURE
     try:
         image_binary_format = image_format.get_image_format(image_binary)
         if image_binary_format not in ['PNG', 'JPEG']:
-            raise Exception('The provided binary data is not a valid PNG or JPG image.')
+            logging.error('[behavex-images] The provided binary data is not a valid PNG or JPG image.')
+            return
         if image_binary_format == 'JPEG':
             with BytesIO(image_binary) as f:
                 img = Image.open(f)
@@ -53,7 +54,8 @@ def attach_image_binary(context, image_binary, header_text=None):
                 image_binary = png_binary_data.read()
         image_stream_hash = image_hash.dhash(Image.open(BytesIO(image_binary)))
     except Exception as exception:
-        logging.error('The provided binary is not a valid image, or could not be converted to PNG: %s' % str(exception))
+        logging.error('[behavex-images] The provided binary is not a valid image, or could not be converted to PNG: %s' % str(exception))
+        return
     try:
         if not context.bhximgs_image_hash or image_stream_hash != context.bhximgs_image_hash:
             context.bhximgs_attached_images_idx += 1
@@ -70,7 +72,7 @@ def attach_image_binary(context, image_binary, header_text=None):
             context.bhximgs_log_stream.truncate(0)
         add_image_to_report_story(context)
     except Exception as exception:
-        logging.error('It was not possible to add the image to the report: %s' % str(exception))
+        logging.error('[behavex-images] It was not possible to add the image to the report: %s' % str(exception))
 
 
 def attach_image_file(context, file_path, header_text=None):
@@ -85,19 +87,20 @@ def attach_image_file(context, file_path, header_text=None):
     Returns:
     None
 
-    Raises:
-    Exception: If the provided file format is not supported. Only PNG and JPG files can be attached.
-    Exception: If the provided file cannot be found at the specified path.
+    Logs:
+    Error: If the provided file format is not supported. Only PNG and JPG files can be attached.
+    Error: If the provided file cannot be found at the specified path.
     """
     if os.path.isfile(file_path):
         file_extension = os.path.splitext(file_path)[1]
         if file_extension.lower() not in ['.jpg', '.png']:
-            raise Exception('The provided file format is not supported. Only PNG and JPG files can be attached.')
+            logging.error('[behavex-images] The provided file format is not supported. Only PNG and JPG files can be attached.')
+            return
         with open(file_path, 'rb') as image_file:
             binary_data = image_file.read()
             attach_image_binary(context, binary_data, header_text)
     else:
-        logging.error('The provided file cannot be found at the specified path:  %s' % file_path)
+        logging.error('[behavex-images] The provided file cannot be found at the specified path:  %s' % file_path)
 
 
 def clean_all_attached_images(context):
