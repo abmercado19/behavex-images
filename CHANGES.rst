@@ -1,7 +1,7 @@
 Version History
 ===============================================================================
 
-Version: 3.0.3
+Version: 3.0.5
 -------------------------------------------------------------------------------
 
-* First release of behavex-images in PyPI
+* First public version of behavex-images library
