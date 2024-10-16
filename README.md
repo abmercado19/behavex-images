@@ -1,9 +1,9 @@
 [![Downloads](https://static.pepy.tech/badge/behavex-images)](https://pepy.tech/project/behavex-images)
 [![PyPI version](https://badge.fury.io/py/behavex-images.svg)](https://badge.fury.io/py/behavex-images)
-[![Python Versions](https://img.shields.io/pypi/pyversions/behavex-images.svg)](https://pypi.org/project/behavex-images/)
+<!-- [![Python Versions](https://img.shields.io/pypi/pyversions/behavex-images.svg)](https://pypi.org/project/behavex-images/) -->
 [![Dependency Status](https://img.shields.io/librariesio/github/abmercado19/behavex-images)](https://libraries.io/github/abmercado19/behavex-images)
 [![License](https://img.shields.io/github/license/abmercado19/behavex-images.svg)](https://github.com/abmercado19/behavex-images/blob/main/LICENSE)
-[![Build Status](https://github.com/abmercado19/behavex-images/actions/workflows/python-package.yml/badge.svg)](https://github.com/abmercado19/behavex-images/actions)
+<!-- [![Build Status](https://github.com/abmercado19/behavex-images/actions/workflows/python-package.yml/badge.svg)](https://github.com/abmercado19/behavex-images/actions) -->
 [![GitHub last commit](https://img.shields.io/github/last-commit/abmercado19/behavex-images.svg)](https://github.com/abmercado19/behavex-images/commits/main)
 
 # behavex-images
