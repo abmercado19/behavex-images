@@ -1,67 +1,117 @@
+[![Downloads](https://static.pepy.tech/badge/behavex-images)](https://pepy.tech/project/behavex-images)
+[![PyPI version](https://badge.fury.io/py/behavex-images.svg)](https://badge.fury.io/py/behavex-images)
+[![Python Versions](https://img.shields.io/pypi/pyversions/behavex-images.svg)](https://pypi.org/project/behavex-images/)
+[![Dependency Status](https://img.shields.io/librariesio/github/abmercado19/behavex-images)](https://libraries.io/github/abmercado19/behavex-images)
+[![License](https://img.shields.io/github/license/abmercado19/behavex-images.svg)](https://github.com/abmercado19/behavex-images/blob/main/LICENSE)
+[![Build Status](https://github.com/abmercado19/behavex-images/actions/workflows/python-package.yml/badge.svg)](https://github.com/abmercado19/behavex-images/actions)
+[![GitHub last commit](https://img.shields.io/github/last-commit/abmercado19/behavex-images.svg)](https://github.com/abmercado19/behavex-images/commits/main)
+
 # behavex-images
-This implementation extends the BehaveX library to enable attaching images to the generated HTML report
+
+An extension for the BehaveX library that enables attaching images to the generated HTML report.
 
 ## Installation
+
+```bash
 pip install behavex-images
+```
 
-## Basic Usage
+## Features
 
-The following methods are provided to manage image attachments in the BehaveX HTML report:
-1. `attach_image_binary(context, image_binary)`
-    - This function attaches an image from binary data to the test execution report. It takes two parameters:
-        - `context`: The context object which contains various attributes used in the function.
-        - `image_binary`: The binary data of the image to be attached.
-    - The function determines the binary format to ensure it maps to a JPG or PNG image. Otherwise, it raises an exception.
-    - Then, it converts the image to PNG format (if it is not already in that format) to add it to the gallery.
+- Attach images to BehaveX HTML reports
+- Support for both binary image data and image files
+- Flexible attachment conditions (always, only on failure, or never)
+- Easy integration with existing BehaveX projects
 
-2. `attach_image_file(context, file_path)`
-    - This function attaches an image from a file to the test execution report. It takes two parameters:
-        - `context`: The context object which contains various attributes used in the function.
-        - `file_path`: The absolute path to the image file to be attached.
-    - The function first checks if the file exists at the given path. If it does not, it raises an exception.
-    - If the file exists, it checks the file extension. If the extension is not JPG or PNG, it raises an exception.
-    - Then, it converts the image to PNG format (if it is not already in that format) to add it to the gallery.
+## Usage
 
-3. `set_attachments_condition(context, condition)`
-    - This function sets the condition to attach images to the HTML report. It takes two parameters:
-        - `context`: The context object which contains various attributes used in the function.
-        - `condition`: The condition to attach images to the HTML report. Possible values:
-          - AttachmentsCondition.ALWAYS: Attach images to the HTML report always.
-          - AttachmentsCondition.ONLY_ON_FAILURE: Attach images to the HTML report only when the test fails. This is the default value.
-          - AttachmentsCondition.NEVER: Do not attach images to the HTML report, no matter the test result.
+The `behavex-images` library provides four main methods for managing image attachments in BehaveX HTML reports:
 
-4. `clean_all_attached_images`
-    - This function removes all images already attached to the HTML report for the current test scenario.
+### 1. Attach Image from Binary Data
 
-## Examples
-The provided methods can be used from the hooks available in the environment.py file, or directly from step definitions to attach images to the HTML report. For example:
-
-* **Example 1**: Attaching an image file from a step definition
 ```python
-...
 from behavex_images import image_attachments
 
-@given('I take a screenshot from current page')
-def step_impl(context):
-    image_attachments.attach_image_file(context, 'path/to/image.png')
-``` 
+image_attachments.attach_image_binary(context, image_binary)
+```
 
-* **Example 2**: Attaching an image binary from the `after_step` hook in environment.py
+- `context`: The BehaveX context object
+- `image_binary`: Binary data of the image (JPG or PNG)
+
+### 2. Attach Image from File
+
 ```python
-...
+from behavex_images import image_attachments
+
+image_attachments.attach_image_file(context, file_path)
+```
+
+- `context`: The BehaveX context object
+- `file_path`: Absolute path to the image file (JPG or PNG)
+
+### 3. Set Attachment Condition
+
+```python
+from behavex_images import image_attachments
+from behavex_images.image_attachments import AttachmentsCondition
+
+image_attachments.set_attachments_condition(context, condition)
+```
+
+- `context`: The BehaveX context object
+- `condition`: One of the following `AttachmentsCondition` values:
+  - `ALWAYS`: Attach images to every report
+  - `ONLY_ON_FAILURE`: Attach images only when a test fails (default)
+  - `NEVER`: Do not attach any images
+
+### 4. Clean All Attached Images
+
+```python
+from behavex_images import image_attachments
+
+image_attachments.clean_all_attached_images(context)
+```
+
+- `context`: The BehaveX context object
+
+## Examples
+
+### Attaching an Image in a Step Definition
+
+```python
+from behavex_images import image_attachments
+
+@given('I take a screenshot of the current page')
+def step_impl(context):
+    image_attachments.attach_image_file(context, 'path/to/screenshot.png')
+```
+
+### Using Hooks in environment.py
+
+```python
 from behavex_images import image_attachments
 from behavex_images.image_attachments import AttachmentsCondition
 
 def before_all(context):
-    image_attachements.set_attachments_condition(context, AttachmentsCondition.ONLY_ON_FAILURE)
+    image_attachments.set_attachments_condition(context, AttachmentsCondition.ONLY_ON_FAILURE)
 
 def after_step(context, step):
-    image_attachements.attach_image_binary(context, selenium_driver.get_screenshot_as_png())
+    # Assuming you're using Selenium WebDriver
+    image_attachments.attach_image_binary(context, context.driver.get_screenshot_as_png())
 ```
 
+## Sample Report Output
 
-![test execution report](https://github.com/abmercado19/behavex-images/blob/master/behavex_images/img/html_test_report.png?raw=true)
+![Test Execution Report](https://github.com/abmercado19/behavex-images/blob/master/behavex_images/img/html_test_report.png?raw=true)
 
-![test execution report](https://github.com/abmercado19/behavex-images/blob/master/behavex_images/img/html_test_report_2.png?raw=true)
+![Test Execution Report with Images](https://github.com/abmercado19/behavex-images/blob/master/behavex_images/img/html_test_report_2.png?raw=true)
 
-![test execution report](https://github.com/abmercado19/behavex-images/blob/master/behavex_images/img/html_test_report_3.png?raw=true)
+![Test Execution Report Details](https://github.com/abmercado19/behavex-images/blob/master/behavex_images/img/html_test_report_3.png?raw=true)
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## License
+
+This project is licensed under the [MIT License](https://github.com/abmercado19/behavex-images/blob/main/LICENSE).
