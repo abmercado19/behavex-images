@@ -39,7 +39,7 @@ def attach_image_binary(context, image_binary, header_text=None):
     Error: If it was not possible to add the image to the report.
     """
     if "bhximgs_attachments_condition" not in context:
-        context.bhximgs_attachments_condition = AttachmentsCondition.ON_FAILURE
+        context.bhximgs_attachments_condition = AttachmentsCondition.ONLY_ON_FAILURE
     try:
         image_binary_format = image_format.get_image_format(image_binary)
         if image_binary_format not in ['PNG', 'JPEG']:
@@ -125,7 +125,7 @@ def set_attachments_condition(context, attachments_condition: AttachmentsConditi
 
     Parameters:
     context (dict): A dictionary that holds the context of the current test execution
-    condition (AttachmentsCondition): The condition under which the images should be attached to the report (AttachmentsCondition.ALWAYS, AttachmentsCondition.ON_FAILURE, AttachmentsCondition.NEVER).
+    condition (AttachmentsCondition): The condition under which the images should be attached to the report (AttachmentsCondition.ALWAYS, AttachmentsCondition.ONLY_ON_FAILURE, AttachmentsCondition.NEVER).
 
     Returns:
     None

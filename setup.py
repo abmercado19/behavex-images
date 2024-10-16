@@ -20,7 +20,7 @@ setup(
     # Application name:
     name='behavex-images',
     # Version number (initial):
-    version='3.0.6',
+    version='3.0.7',
     license="MIT",
     # Application author details:
     author='Hernan Rey, Ana Mercado',

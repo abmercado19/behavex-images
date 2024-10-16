@@ -27,7 +27,7 @@ The following methods are provided to manage image attachments in the BehaveX HT
         - `context`: The context object which contains various attributes used in the function.
         - `condition`: The condition to attach images to the HTML report. Possible values:
           - AttachmentsCondition.ALWAYS: Attach images to the HTML report always.
-          - AttachmentsCondition.ON_FAILURE: Attach images to the HTML report only when the test fails. This is the default value.
+          - AttachmentsCondition.ONLY_ON_FAILURE: Attach images to the HTML report only when the test fails. This is the default value.
           - AttachmentsCondition.NEVER: Do not attach images to the HTML report, no matter the test result.
 
 4. `clean_all_attached_images`
