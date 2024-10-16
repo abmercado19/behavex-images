@@ -1,6 +1,13 @@
 Version History
 ===============================================================================
 
+Version: 3.0.7
+-------------------------------------------------------------------------------
+
+FIXES:
+
+* Fixing issue related to the image attachments conditions, as ON_FAILURE option was replaced by ONLY_ON_FAILURE.
+
 Version: 3.0.6
 -------------------------------------------------------------------------------
 
