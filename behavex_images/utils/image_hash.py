@@ -70,7 +70,7 @@ def dhash(image, hash_size=8):
     @image must be a PIL instance.
     """
     image = image.convert('L').resize((hash_size + 1, hash_size), Image.LANCZOS)
-    pixels = numpy.array(image.getdata(), dtype=numpy.float64).reshape(
+    pixels = numpy.array(image.getdata(), dtype=float).reshape(
         (hash_size + 1, hash_size)
     )
     # compute differences
