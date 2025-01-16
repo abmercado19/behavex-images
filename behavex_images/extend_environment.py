@@ -39,7 +39,7 @@ def extend_behave_hooks():
     global hooks_already_set
     behave_run_hook = ModelRunner.run_hook
     behavex_images_env = sys.modules[__name__]
-    is_dry_run = get_param('dry_run')
+    is_dry_run = True if os.environ.get('DRY_RUN', "false").lower() == "true" else False
     
     def run_hook(self, name, context, *args):
         if is_dry_run:
