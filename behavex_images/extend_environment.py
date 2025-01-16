@@ -8,7 +8,7 @@ from behave.runner import ModelRunner
 from behavex import environment as bhx_benv
 from behavex.outputs.report_utils import normalize_filename
 from behavex.utils import try_operate_descriptor
-
+from behavex.conf_mgr import get_param
 from behavex_images.image_attachments import AttachmentsCondition
 from behavex_images.utils import report_utils
 
@@ -39,8 +39,13 @@ def extend_behave_hooks():
     global hooks_already_set
     behave_run_hook = ModelRunner.run_hook
     behavex_images_env = sys.modules[__name__]
-
+    is_dry_run = get_param('dry_run')
+    
     def run_hook(self, name, context, *args):
+        if is_dry_run:
+            behave_run_hook(self, name, context, *args)
+            return
+
         if name == 'before_all':
             # noinspection PyUnresolvedReferences
             behavex_images_env.before_all(context)
