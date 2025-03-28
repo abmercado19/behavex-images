@@ -146,17 +146,17 @@ body:after {
 }
 
 .lb-dataContainer {
-  display: inline-block;
-  margin: 0 auto;
-  padding-top: 5px;
+  margin-top: 5px;
   *zoom: 1;
   width: 100%;
+  float: left;
   -moz-border-radius-bottomleft: 4px;
   -webkit-border-bottom-left-radius: 4px;
   border-bottom-left-radius: 4px;
   -moz-border-radius-bottomright: 4px;
   -webkit-border-bottom-right-radius: 4px;
   border-bottom-right-radius: 4px;
+  position: relative;
 }
 
 .lb-dataContainer:after {
@@ -212,4 +212,107 @@ body:after {
   cursor: pointer;
   filter: progid:DXImageTransform.Microsoft.Alpha(Opacity=100);
   opacity: 1;
+}
+
+/* Add maximize button styles */
+.lb-maximize {
+  display: none;
+}
+
+/* Maximized state styles */
+.lightbox.maximized {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100% !important;
+  height: 100% !important;
+  margin: 0;
+  padding: 0;
+  z-index: 9999;
+}
+
+.lightbox.maximized .lb-outerContainer {
+  width: 100% !important;
+  height: 100% !important;
+  margin: 0;
+  padding: 0;
+  background-color: transparent;
+}
+
+.lightbox.maximized .lb-container {
+  width: 100% !important;
+  height: 100% !important;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lightbox.maximized .lb-image {
+  max-width: 100%;
+  max-height: 100vh;
+  width: auto;
+  height: auto;
+  margin: 0;
+  padding: 0;
+  object-fit: contain;
+}
+
+.lightbox.maximized .lb-dataContainer {
+  display: none;
+}
+
+.lightbox.maximized .lb-nav {
+  display: none;
+}
+
+.lb-zoom-controls {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 999;
+}
+
+
+.lb-zoom-in:hover, .lb-zoom-out:hover {
+  opacity: 1;
+}
+
+.lb-zoom-out {
+  display: none;
+}
+
+.maximized .lb-zoom-in {
+  display: none;
+}
+
+.maximized .lb-zoom-out {
+  display: inline-block;
+}
+
+.lb-header {
+  position: relative;
+  height: 30px;  /* Increased height to better fit glyphicons */
+  background: transparent;
+  text-align: left;
+  z-index: 2;
+}
+
+.lb-back, .lb-zoom-in, .lb-zoom-out {
+  display: inline-block;
+  margin-left: 15px;
+  font-size: 18px;
+  color: #FFF;
+  line-height: 20px;
+  text-align: center;
+  cursor: pointer;
+  opacity: 0.7;
+  text-decoration: none;
+  padding: 5px;  /* Added padding for better clickable area */
+}
+
+.lb-back:hover, .lb-zoom-in:hover, .lb-zoom-out:hover {
+  opacity: 1;
+  text-decoration: none;
+  color: #CCC;
 }

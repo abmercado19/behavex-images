@@ -49,6 +49,9 @@ def create_gallery(folder, title='BehaveX', captions={}):
     ET.SubElement(
         head, 'link', {'rel': 'stylesheet', 'href': '../image_attachments_utils/lightbox.css'}
     )
+    ET.SubElement(
+        head, 'link', {'href': '../../bootstrap/css/bootstrap.min.css', 'rel': 'stylesheet'}
+    )
     head_title = ET.SubElement(head, 'title')
     head_title.text = title
     body = ET.SubElement(root, 'body', {'style': 'height: 100%'})

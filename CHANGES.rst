@@ -1,6 +1,15 @@
 Version History
 ===============================================================================
 
+Version: 3.1.0
+-------------------------------------------------------------------------------
+
+ENHANCEMENTS:
+
+* Enabling maximizing a selected image, increasing the image size and hiding the logs associated with the image.
+* Adding zoom in and zoom out buttons to the image viewer.
+* Adding a "Back" button to go back to the list of images.
+
 Version: 3.0.10
 -------------------------------------------------------------------------------
 

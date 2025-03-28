@@ -58,7 +58,7 @@
     // Attach event handlers to the new DOM elements. click click click
     Lightbox.prototype.build = function() {
       var self = this;
-      $("<div id='lightboxOverlay' class='lightboxOverlay'></div><div id='lightbox' class='lightbox'><div class='lb-outerContainer'><div class='lb-container'><img class='lb-image' src='' /><div class='lb-nav'><a class='lb-prev' href='' ></a><a class='lb-next' href='' ></a></div><div class='lb-loader'><a class='lb-cancel'></a></div></div></div><div class='lb-dataContainer'><div class='lb-data'><div class='lb-details'><span class='lb-caption'></span><span class='lb-number'></span></div><div class='lb-closeContainer'><a class='lb-close'></a></div></div></div></div>").appendTo($('body'));
+      $("<div id='lightboxOverlay' class='lightboxOverlay'></div><div id='lightbox' class='lightbox'><div class='lb-header'><a class='lb-back' title='Back'><span class='glyphicon glyphicon-arrow-left'></span></a><a class='lb-zoom-in' title='Zoom In'><span class='glyphicon glyphicon-zoom-in'></span></a><a class='lb-zoom-out' title='Zoom Out' style='display: none;'><span class='glyphicon glyphicon-zoom-out'></span></a></div><div class='lb-outerContainer'><div class='lb-container'><img class='lb-image' src='' /><div class='lb-nav'><a class='lb-prev' href='' ></a><a class='lb-next' href='' ></a></div><div class='lb-loader'><a class='lb-cancel'></a></div></div></div><div class='lb-dataContainer'><div class='lb-data'><div class='lb-details'><span class='lb-caption'></span><span class='lb-number'></span></div><div class='lb-closeContainer'><a class='lb-close'></a></div></div></div></div>").appendTo($('body'));
 
       // Cache jQuery objects
       this.$lightbox       = $('#lightbox');
@@ -114,6 +114,113 @@
         self.end();
         return false;
       });
+
+      // Add back button handler
+      this.$lightbox.find('.lb-back').on('click', function() {
+        if (self.isMaximized) {
+          // If maximized, just minimize
+          self.toggleMaximize();
+        } else {
+          // If not maximized, close lightbox to return to list
+          self.end();
+        }
+        return false;
+      });
+
+      // Update zoom button handlers
+      this.$lightbox.find('.lb-zoom-in').on('click', function() {
+        if (!self.isMaximized) {
+          self.toggleMaximize();
+        }
+        return false;
+      });
+
+      this.$lightbox.find('.lb-zoom-out').on('click', function() {
+        if (self.isMaximized) {
+          self.toggleMaximize();
+        }
+        return false;
+      });
+    };
+
+    // Add maximize state tracking
+    Lightbox.prototype.isMaximized = false;
+
+    // Toggle maximize state
+    Lightbox.prototype.toggleMaximize = function() {
+      this.isMaximized = !this.isMaximized;
+      this.$lightbox.toggleClass('maximized');
+      
+      var $image = this.$lightbox.find('.lb-image');
+      
+      var self = this;
+      
+      if (this.isMaximized) {
+        // Store original dimensions before maximizing
+        $image.data('original-width', $image.width());
+        $image.data('original-height', $image.height());
+        
+        // Calculate maximized dimensions
+        var windowWidth = $(window).width();
+        var windowHeight = $(window).height();
+        var originalWidth = $image.width();
+        var originalHeight = $image.height();
+        var ratio = Math.min(windowWidth / originalWidth, windowHeight / originalHeight);
+        var newWidth = originalWidth * ratio;
+        var newHeight = originalHeight * ratio;
+        
+        $image.width(newWidth);
+        $image.height(newHeight);
+        
+        this.$lightbox.find('.lb-dataContainer').slideUp(200);
+        this.$lightbox.find('.lb-nav').hide();
+        
+        // Disable click outside when maximized
+        this.$overlay.off('click');
+        this.$lightbox.off('click');
+        this.$outerContainer.off('click');
+
+        // Update button visibility
+        this.$lightbox.find('.lb-zoom-in').hide();
+        this.$lightbox.find('.lb-zoom-out').show();
+      } else {
+        // Get the stored original dimensions
+        var originalWidth = $image.data('original-width');
+        var originalHeight = $image.data('original-height');
+        
+        // Restore original dimensions
+        $image.width(originalWidth);
+        $image.height(originalHeight);
+        
+        this.$lightbox.find('.lb-dataContainer').slideDown(200);
+        this.$lightbox.find('.lb-nav').show();
+        
+        // Restore click outside handlers
+        this.$overlay.on('click', function() {
+          self.end();
+          return false;
+        });
+        
+        this.$lightbox.on('click', function(event) {
+          if ($(event.target).attr('id') === 'lightbox') {
+            self.end();
+          }
+          return false;
+        });
+        
+        this.$outerContainer.on('click', function(event) {
+          if ($(event.target).attr('id') === 'lightbox') {
+            self.end();
+          }
+          return false;
+        });
+
+        // Update button visibility
+        this.$lightbox.find('.lb-zoom-in').show();
+        this.$lightbox.find('.lb-zoom-out').hide();
+      }
+      
+      this.sizeContainer($image.width(), $image.height());
     };
 
     // Show overlay and lightbox. If the image is part of a set, add siblings to album array.
@@ -200,37 +307,48 @@
 
         $preloader = $(preloader);
 
-        $image.width(preloader.width);
-        $image.height(preloader.height);
+        // Store original dimensions
+        var originalWidth = preloader.width;
+        var originalHeight = preloader.height;
 
-        if (self.options.fitImagesInViewport) {
-          // Fit image inside the viewport.
-          // Take into account the border around the image and an additional 10px gutter on each side.
+        if (self.isMaximized) {
+          // In maximized mode, calculate dimensions to fit viewport
+          windowWidth = $(window).width();
+          windowHeight = $(window).height();
+          
+          // Calculate scaling ratio to fit viewport while maintaining aspect ratio
+          var ratio = Math.min(windowWidth / originalWidth, windowHeight / originalHeight);
+          imageWidth = originalWidth * ratio;
+          imageHeight = originalHeight * ratio;
+        } else {
+          // Normal mode - use original dimensions
+          imageWidth = originalWidth;
+          imageHeight = originalHeight;
 
-          windowWidth    = $(window).width();
-          windowHeight   = $(window).height();
-          maxImageWidth  = windowWidth - self.containerLeftPadding - self.containerRightPadding - 20;
-          maxImageHeight = windowHeight - self.containerTopPadding - self.containerBottomPadding - 120;
+          if (self.options.fitImagesInViewport) {
+            windowWidth = $(window).width();
+            windowHeight = $(window).height();
+            maxImageWidth = windowWidth - self.containerLeftPadding - self.containerRightPadding - 20;
+            maxImageHeight = windowHeight - self.containerTopPadding - self.containerBottomPadding - 120;
 
-          // Is there a fitting issue?
-          if ((preloader.width > maxImageWidth) || (preloader.height > maxImageHeight)) {
-            if ((preloader.width / maxImageWidth) > (preloader.height / maxImageHeight)) {
-              imageWidth  = maxImageWidth;
-              imageHeight = parseInt(preloader.height / (preloader.width / imageWidth), 10);
-              $image.width(imageWidth);
-              $image.height(imageHeight);
-            } else {
-              imageHeight = maxImageHeight;
-              imageWidth = parseInt(preloader.width / (preloader.height / imageHeight), 10);
-              $image.width(imageWidth);
-              $image.height(imageHeight);
+            if ((originalWidth > maxImageWidth) || (originalHeight > maxImageHeight)) {
+              if ((originalWidth / maxImageWidth) > (originalHeight / maxImageHeight)) {
+                imageWidth = maxImageWidth;
+                imageHeight = parseInt(originalHeight / (originalWidth / imageWidth), 10);
+              } else {
+                imageHeight = maxImageHeight;
+                imageWidth = parseInt(originalWidth / (originalHeight / imageHeight), 10);
+              }
             }
           }
         }
-        self.sizeContainer($image.width(), $image.height());
+
+        $image.width(imageWidth);
+        $image.height(imageHeight);
+        self.sizeContainer(imageWidth, imageHeight);
       };
 
-      preloader.src          = this.album[imageNumber].link;
+      preloader.src = this.album[imageNumber].link;
       this.currentImageIndex = imageNumber;
     };
 
@@ -245,37 +363,52 @@
     Lightbox.prototype.sizeContainer = function(imageWidth, imageHeight) {
       var self = this;
 
-      var oldWidth  = this.$outerContainer.outerWidth();
+      var oldWidth = this.$outerContainer.outerWidth();
       var oldHeight = this.$outerContainer.outerHeight();
-      var newWidth  = imageWidth + this.containerLeftPadding + this.containerRightPadding;
+      var newWidth = imageWidth + this.containerLeftPadding + this.containerRightPadding;
       var newHeight = imageHeight + this.containerTopPadding + this.containerBottomPadding;
 
       function postResize() {
-        var dataWidth = $(window).width() - imageWidth -45;
-        if(newWidth/2>dataWidth) dataWidth = newWidth / 2;
-        self.$lightbox.find('.lb-dataContainer').width(dataWidth);
-        self.$lightbox.find('.lb-prevLink').height(newHeight);
-        self.$lightbox.find('.lb-nextLink').height(newHeight);
+        if (self.isMaximized) {
+          // When maximized, use full viewport
+          var windowWidth = $(window).width();
+          var windowHeight = $(window).height();
+          
+          // Update container dimensions to match image
+          self.$lightbox.find('.lb-container').width(imageWidth).height(imageHeight);
+          self.$lightbox.find('.lb-outerContainer').width(imageWidth).height(imageHeight);
+          
+          // Hide UI elements
+          self.$lightbox.find('.lb-dataContainer').hide();
+          self.$lightbox.find('.lb-nav').hide();
+          
+          // Update overlay and lightbox dimensions
+          self.$overlay.width(windowWidth);
+          self.$lightbox.width(windowWidth);
+        } else {
+          // Normal mode
+          var dataWidth = $(window).width() - imageWidth - 45;
+          if(newWidth/2 > dataWidth) dataWidth = newWidth / 2;
+          self.$lightbox.find('.lb-dataContainer').width(dataWidth);
+          self.$lightbox.find('.lb-prevLink').height(newHeight);
+          self.$lightbox.find('.lb-nextLink').height(newHeight);
 
-    var final_width = newWidth * 1.6
-		if($(window).width() > final_width){
-      final_width = $(window).width()
-    }
-    self.$overlay.width(final_width )
-		self.$lightbox.width(final_width)
+          var final_width = newWidth * 1.6;
+          if($(window).width() > final_width) {
+            final_width = $(window).width();
+          }
+          self.$overlay.width(final_width);
+          self.$lightbox.width(final_width);
+        }
         self.showImage();
       }
 
-      //if (oldWidth !== newWidth || oldHeight !== newHeight) {
-        this.$outerContainer.animate({
-          width: newWidth,
-          height: newHeight
-        }, this.options.resizeDuration, 'swing', function() {
-          postResize();
-        });
-      //} else {
-      //  postResize();
-      //}
+      this.$outerContainer.animate({
+        width: newWidth,
+        height: newHeight
+      }, this.options.resizeDuration, 'swing', function() {
+        postResize();
+      });
     };
 
     // Display the image and it's details and begin preload neighboring images.
