@@ -58,7 +58,7 @@
     // Attach event handlers to the new DOM elements. click click click
     Lightbox.prototype.build = function() {
       var self = this;
-      $("<div id='lightboxOverlay' class='lightboxOverlay'></div><div id='lightbox' class='lightbox'><div class='lb-header'><a class='lb-back' title='Back'><span class='glyphicon glyphicon-arrow-left'></span></a><a class='lb-zoom-in' title='Zoom In'><span class='glyphicon glyphicon-zoom-in'></span></a><a class='lb-zoom-out' title='Zoom Out' style='display: none;'><span class='glyphicon glyphicon-zoom-out'></span></a></div><div class='lb-outerContainer'><div class='lb-container'><img class='lb-image' src='' /><div class='lb-nav'><a class='lb-prev' href='' ></a><a class='lb-next' href='' ></a></div><div class='lb-loader'><a class='lb-cancel'></a></div></div></div><div class='lb-dataContainer'><div class='lb-data'><div class='lb-details'><span class='lb-caption'></span><span class='lb-number'></span></div><div class='lb-closeContainer'><a class='lb-close'></a></div></div></div></div>").appendTo($('body'));
+      $("<div id='lightboxOverlay' class='lightboxOverlay'></div><div id='lightbox' class='lightbox'><div class='lb-outerContainer'><div class='lb-container'><img class='lb-image' src='' /><div class='lb-nav'><a class='lb-prev' href='' ></a><div class='lb-middle'></div><a class='lb-next' href='' ></a></div><div class='lb-loader'><a class='lb-cancel'></a></div></div></div><div class='lb-dataContainer'><div class='lb-data'><div class='lb-details'><span class='lb-caption'></span><span class='lb-number'></span></div><div class='lb-closeContainer'><a class='lb-close'></a></div></div></div></div>").appendTo($('body'));
 
       // Cache jQuery objects
       this.$lightbox       = $('#lightbox');
@@ -90,6 +90,17 @@
           self.end();
         }
         return false;
+      });
+
+      // Add wheel event handler for scrolling in maximized view
+      this.$lightbox.on('wheel', function(event) {
+        if (self.isMaximized) {
+          var container = self.$lightbox.find('.lb-container.lb-full-width')[0];
+          if (container) {
+            container.scrollTop += event.originalEvent.deltaY;
+            event.preventDefault();
+          }
+        }
       });
 
       this.$lightbox.find('.lb-prev').on('click', function() {
@@ -141,6 +152,12 @@
         }
         return false;
       });
+
+      // Add middle area click handler
+      this.$lightbox.find('.lb-middle').on('click', function() {
+        self.toggleMaximize();
+        return false;
+      });
     };
 
     // Add maximize state tracking
@@ -152,10 +169,17 @@
       this.$lightbox.toggleClass('maximized');
       
       var $image = this.$lightbox.find('.lb-image');
+      var $container = this.$lightbox.find('.lb-container');
+      var $outerContainer = this.$lightbox.find('.lb-outerContainer');
       
       var self = this;
       
       if (this.isMaximized) {
+        // Add full-width class to relevant elements
+        $outerContainer.addClass('lb-full-width');
+        $container.addClass('lb-full-width');
+        $image.addClass('lb-full-width');
+        
         // Store original dimensions before maximizing
         $image.data('original-width', $image.width());
         $image.data('original-height', $image.height());
@@ -173,17 +197,16 @@
         $image.height(newHeight);
         
         this.$lightbox.find('.lb-dataContainer').slideUp(200);
-        this.$lightbox.find('.lb-nav').hide();
         
-        // Disable click outside when maximized
-        this.$overlay.off('click');
-        this.$lightbox.off('click');
-        this.$outerContainer.off('click');
-
         // Update button visibility
         this.$lightbox.find('.lb-zoom-in').hide();
         this.$lightbox.find('.lb-zoom-out').show();
       } else {
+        // Remove full-width class from relevant elements
+        $outerContainer.removeClass('lb-full-width');
+        $container.removeClass('lb-full-width');
+        $image.removeClass('lb-full-width');
+        
         // Get the stored original dimensions
         var originalWidth = $image.data('original-width');
         var originalHeight = $image.data('original-height');
@@ -193,28 +216,7 @@
         $image.height(originalHeight);
         
         this.$lightbox.find('.lb-dataContainer').slideDown(200);
-        this.$lightbox.find('.lb-nav').show();
         
-        // Restore click outside handlers
-        this.$overlay.on('click', function() {
-          self.end();
-          return false;
-        });
-        
-        this.$lightbox.on('click', function(event) {
-          if ($(event.target).attr('id') === 'lightbox') {
-            self.end();
-          }
-          return false;
-        });
-        
-        this.$outerContainer.on('click', function(event) {
-          if ($(event.target).attr('id') === 'lightbox') {
-            self.end();
-          }
-          return false;
-        });
-
         // Update button visibility
         this.$lightbox.find('.lb-zoom-in').show();
         this.$lightbox.find('.lb-zoom-out').hide();

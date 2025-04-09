@@ -52,6 +52,132 @@ def create_gallery(folder, title='BehaveX', captions={}):
     ET.SubElement(
         head, 'link', {'href': '../../bootstrap/css/bootstrap.min.css', 'rel': 'stylesheet'}
     )
+    # Add custom CSS for lightbox
+    style = ET.SubElement(head, 'style')
+    style.text = '''
+        /* Initial thumbnail view (view 1) - no changes needed */
+        
+        /* Common header styles for all views */
+        .lb-header {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            z-index: 1000 !important;
+            background: rgba(0, 0, 0, 0) !important;
+            padding: 10px !important;
+            height: 50px !important;
+            box-sizing: border-box !important;
+        }
+        
+        /* Image + logs view (view 2) */
+        .lb-outerContainer {
+            width: 50% !important;
+            max-width: 50% !important;
+            float: left !important;
+            # margin-top: 50px !important; /* Add margin to account for header height */
+        }
+        .lb-dataContainer {
+            width: 50% !important;
+            max-width: 50% !important;
+            float: left !important;
+            background: rgba(0, 0, 0, 0) !important;
+            overflow-y: auto !important;
+            height: calc(100% - 50px) !important; /* Subtract header height */
+            # margin-top: 50px !important; /* Add margin to account for header height */
+        }
+        .lb-data {
+            padding: 20px !important;
+        }
+        .lb-data .lb-caption {
+            max-width: 100% !important;
+            width: 100% !important;
+            color: #fff !important;
+            font-size: 14px !important;
+            line-height: 1.5 !important;
+        }
+        .lb-container {
+            width: 100% !important;
+            max-width: 100% !important;
+        }
+        .lb-image {
+            width: 100% !important;
+            max-width: 100% !important;
+            height: auto !important;
+        }
+        
+        /* Full width view (view 3) - magnifier glass */
+        /* Prevent body scrolling when in full width view */
+        body.lb-disable-scrolling {
+            overflow: hidden !important;
+        }
+        
+        /* Container for the full width view */
+        #lightbox.maximized {
+            # padding-top: 50px !important; /* Add padding to account for header */
+            height: 100vh !important;
+            overflow: hidden !important;
+        }
+        /* Hide view 2's scrollbar when in maximized state */
+        #lightbox.maximized .lb-dataContainer {
+            overflow: hidden !important;
+            visibility: hidden !important;
+            display: none !important;
+        }
+        .lb-outerContainer.lb-full-width {
+            position: fixed !important;
+            # top: 50px !important; /* Match header height */
+            left: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
+            width: 100% !important;
+            max-width: none !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            float: none !important;
+            overflow-y: auto !important; /* Enable vertical scrolling */
+            background: #000 !important;
+            z-index: 999 !important; /* Below header but above other content */
+        }
+        .lb-container.lb-full-width {
+            width: 100% !important;
+            max-width: none !important;
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+        .lb-image.lb-full-width {
+            width: 100% !important;
+            max-width: none !important;
+            height: auto !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            display: block !important;
+        }
+        /* Hide logs in full width view */
+        .lb-full-width + .lb-dataContainer {
+            display: none !important;
+        }
+        /* Ensure the lightbox overlay takes full width */
+        .lb-overlay {
+            width: 100% !important;
+            height: 100% !important;
+        }
+        
+        /* Customize scrollbar for view 3 */
+        .lb-outerContainer.lb-full-width::-webkit-scrollbar {
+            width: 10px !important;
+        }
+        .lb-outerContainer.lb-full-width::-webkit-scrollbar-track {
+            background: #000 !important;
+        }
+        .lb-outerContainer.lb-full-width::-webkit-scrollbar-thumb {
+            background: #666 !important;
+            border-radius: 5px !important;
+        }
+        .lb-outerContainer.lb-full-width::-webkit-scrollbar-thumb:hover {
+            background: #888 !important;
+        }
+    '''
     head_title = ET.SubElement(head, 'title')
     head_title.text = title
     body = ET.SubElement(root, 'body', {'style': 'height: 100%'})
@@ -112,8 +238,7 @@ def create_gallery_html_file(captions, container, folder, root):
                 'img',
                 {
                     'src': file_,
-                    'style': 'max-height: 250px; max-width: 250px; pa'
-                    'dding: 30px;border: 1px solid silver',
+                    'style': 'max-height: 250px; max-width: 250px; padding: 30px; border: 1px solid silver',
                 },
             )
             pictures_found = True
