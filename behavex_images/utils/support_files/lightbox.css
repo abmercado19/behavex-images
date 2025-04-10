@@ -206,10 +206,11 @@ body:after {
 
 .lb-data .lb-close {
   display: block;
-  float: right;
-  width: 30px;
-  height: 30px;
-  background: url(img_close.png) top right no-repeat;
+  width: 15px;
+  height: 15px;
+  background: url(img_close.png) center center no-repeat;
+  background-size: contain;
+  background-color: white;
   text-align: right;
   outline: none;
   filter: progid:DXImageTransform.Microsoft.Alpha(Opacity=70);
@@ -218,6 +219,9 @@ body:after {
   -moz-transition: opacity 0.2s;
   -o-transition: opacity 0.2s;
   transition: opacity 0.2s;
+  position: absolute;
+  top: 0;
+  right: 10px;
 }
 
 .lb-data .lb-close:hover {

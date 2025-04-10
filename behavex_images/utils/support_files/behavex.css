@@ -1,0 +1,138 @@
+/* Initial thumbnail view (view 1) - no changes needed */
+
+/* Image + logs view (view 2) */
+.lb-outerContainer {
+    width: 50% !important;
+    max-width: 50% !important;
+    float: left !important;
+}
+
+.lb-dataContainer {
+    width: 50% !important;
+    max-width: 50% !important;
+    float: left !important;
+    background: rgba(0, 0, 0, 0) !important;
+    overflow-y: auto !important;
+    height: calc(100% - 50px) !important;
+}
+
+.lb-data {
+    padding: 20px !important;
+}
+
+.lb-data .lb-caption {
+    max-width: 100% !important;
+    width: 100% !important;
+    color: #fff !important;
+    font-size: 14px !important;
+    line-height: 1.5 !important;
+}
+
+.lb-container {
+    width: 100% !important;
+    max-width: 100% !important;
+}
+
+.lb-image {
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+}
+
+/* Full width view (view 3) - magnifier glass */
+/* Prevent body scrolling when in full width view */
+body.lb-disable-scrolling {
+    overflow: hidden !important;
+}
+
+/* Container for the full width view */
+#lightbox.maximized {
+    height: 100vh !important;
+    overflow: hidden !important;
+}
+
+/* Hide view 2's scrollbar when in maximized state */
+#lightbox.maximized .lb-dataContainer {
+    overflow: hidden !important;
+    visibility: hidden !important;
+    display: none !important;
+}
+
+.lb-outerContainer.lb-full-width {
+    position: fixed !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    float: none !important;
+    overflow-y: auto !important;
+    background: #000 !important;
+    z-index: 999 !important;
+}
+
+.lb-container.lb-full-width {
+    width: 100% !important;
+    max-width: none !important;
+    padding: 5px !important;
+    background: rgb(58, 58, 58) !important;
+}
+
+.lb-image.lb-full-width {
+    width: 100% !important;
+    max-width: none !important;
+    height: auto !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    display: block !important;
+}
+
+/* Hide logs in full width view */
+.lb-full-width + .lb-dataContainer {
+    display: none !important;
+}
+
+/* Customize scrollbar for view 3 */
+.lb-outerContainer.lb-full-width::-webkit-scrollbar {
+    width: 10px !important;
+}
+
+.lb-outerContainer.lb-full-width::-webkit-scrollbar-track {
+    background: #000 !important;
+}
+
+.lb-outerContainer.lb-full-width::-webkit-scrollbar-thumb {
+    background: #666 !important;
+    border-radius: 5px !important;
+}
+
+.lb-outerContainer.lb-full-width::-webkit-scrollbar-thumb:hover {
+    background: #888 !important;
+}
+
+/* Gallery styles */
+.gallery-container {
+    height: 100%;
+}
+
+.gallery-title {
+    width: 100%;
+    float: left;
+    text-align: center;
+    font-size: 18px;
+    font-family: Helvetica;
+}
+
+.gallery-image {
+    max-height: 250px;
+    max-width: 250px;
+    padding: 30px;
+    border: 1px solid silver;
+}
+
+/* HTML and body styles */
+html, body {
+    height: 100%;
+} 

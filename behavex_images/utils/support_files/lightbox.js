@@ -211,9 +211,18 @@
         var originalWidth = $image.data('original-width');
         var originalHeight = $image.data('original-height');
         
-        // Restore original dimensions
-        $image.width(originalWidth);
-        $image.height(originalHeight);
+        // Calculate container width
+        var containerWidth = $(window).width();
+        
+        // Calculate new dimensions to fit container while maintaining aspect ratio
+        var maxWidth = containerWidth * 0.6; // Use 60% of container width for image
+        var ratio = Math.min(maxWidth / originalWidth, 1);
+        var newWidth = originalWidth * ratio;
+        var newHeight = originalHeight * ratio;
+        
+        // Restore dimensions with container constraints
+        $image.width(newWidth);
+        $image.height(newHeight);
         
         this.$lightbox.find('.lb-dataContainer').slideDown(200);
         
@@ -364,6 +373,7 @@
     // Animate the size of the lightbox to fit the image we are showing
     Lightbox.prototype.sizeContainer = function(imageWidth, imageHeight) {
       var self = this;
+      var containerWidth = $(window).width();
 
       var oldWidth = this.$outerContainer.outerWidth();
       var oldHeight = this.$outerContainer.outerHeight();
@@ -373,10 +383,6 @@
       function postResize() {
         if (self.isMaximized) {
           // When maximized, use full viewport
-          var windowWidth = $(window).width();
-          var windowHeight = $(window).height();
-          
-          // Update container dimensions to match image
           self.$lightbox.find('.lb-container').width(imageWidth).height(imageHeight);
           self.$lightbox.find('.lb-outerContainer').width(imageWidth).height(imageHeight);
           
@@ -385,22 +391,24 @@
           self.$lightbox.find('.lb-nav').hide();
           
           // Update overlay and lightbox dimensions
-          self.$overlay.width(windowWidth);
-          self.$lightbox.width(windowWidth);
+          self.$overlay.width(containerWidth);
+          self.$lightbox.width(containerWidth);
         } else {
-          // Normal mode
-          var dataWidth = $(window).width() - imageWidth - 45;
-          if(newWidth/2 > dataWidth) dataWidth = newWidth / 2;
-          self.$lightbox.find('.lb-dataContainer').width(dataWidth);
+          // Normal mode - ensure width doesn't exceed container and utilize full width
+          var imageContainerWidth = Math.min(newWidth, containerWidth * 0.6); // 60% for image
+          var dataContainerWidth = containerWidth - imageContainerWidth - 40; // Remaining space minus padding
+          
+          self.$lightbox.find('.lb-outerContainer').width(imageContainerWidth);
+          self.$lightbox.find('.lb-dataContainer')
+            .width(dataContainerWidth)
+            .css('float', 'right');
+          
           self.$lightbox.find('.lb-prevLink').height(newHeight);
           self.$lightbox.find('.lb-nextLink').height(newHeight);
 
-          var final_width = newWidth * 1.6;
-          if($(window).width() > final_width) {
-            final_width = $(window).width();
-          }
-          self.$overlay.width(final_width);
-          self.$lightbox.width(final_width);
+          // Set lightbox to full container width
+          self.$overlay.width(containerWidth);
+          self.$lightbox.width(containerWidth);
         }
         self.showImage();
       }
