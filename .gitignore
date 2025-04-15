@@ -1,4 +1,5 @@
 .idea/
 dist/
+build/
 behavex_images.egg-info/
 .DS_Store

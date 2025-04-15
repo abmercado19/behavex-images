@@ -25,7 +25,7 @@ def create_gallery(folder, title='BehaveX', captions={}):
     Returns:
     None
     """
-    root = ET.Element('html', {'style': 'height: 100%'})
+    root = ET.Element('html', {'class': 'gallery-html'})
     head = ET.SubElement(root, 'head')
     script = ET.SubElement(
         head, 'script', {'type': 'text/javascript', 'charset': 'utf-8'}
@@ -49,23 +49,25 @@ def create_gallery(folder, title='BehaveX', captions={}):
     ET.SubElement(
         head, 'link', {'rel': 'stylesheet', 'href': '../image_attachments_utils/lightbox.css'}
     )
+    ET.SubElement(
+        head, 'link', {'href': '../../bootstrap/css/bootstrap.min.css', 'rel': 'stylesheet'}
+    )
+    # Add custom CSS for lightbox
+    ET.SubElement(
+        head, 'link', {'href': '../image_attachments_utils/behavex.css', 'rel': 'stylesheet'}
+    )
     head_title = ET.SubElement(head, 'title')
     head_title.text = title
-    body = ET.SubElement(root, 'body', {'style': 'height: 100%'})
+    body = ET.SubElement(root, 'body', {'class': 'gallery-body'})
     body_title = ET.SubElement(
         body,
         'h1',
-        {
-            'style': 'width: 100%;float:left;'
-            'text-align:center;'
-            'font-size:18px;'
-            'font-family:Helvetica'
-        },
+        {'class': 'gallery-title'}
     )
     body_title.text = title
     folder = os.path.abspath(folder)
 
-    container = ET.SubElement(body, 'div', {'style': 'height: 100%'})
+    container = ET.SubElement(body, 'div', {'class': 'gallery-container'})
     create_gallery_html_file(captions, container, folder, root)
 
 
@@ -109,8 +111,7 @@ def create_gallery_html_file(captions, container, folder, root):
                 'img',
                 {
                     'src': file_,
-                    'style': 'max-height: 250px; max-width: 250px; pa'
-                    'dding: 30px;border: 1px solid silver',
+                    'class': 'gallery-image'
                 },
             )
             pictures_found = True

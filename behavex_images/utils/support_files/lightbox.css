@@ -45,7 +45,6 @@ body:after {
   float: left;
   display: inline-block;
   position: relative;
-  background-color: white;
   *zoom: 1;
   width: 250px;
   height: 250px;
@@ -109,8 +108,21 @@ body:after {
   display: block;
 }
 
+/* Add styles for the middle clickable area */
+.lb-nav .lb-middle {
+  position: absolute;
+  top: 0;
+  left: 25%;  /* Start at 25% to create a 50% wide middle area */
+  width: 50%;
+  height: 100%;
+  cursor: zoom-in;  /* Default cursor for view 2 */
+  z-index: 11;  /* Higher than prev/next buttons */
+  display: block;
+}
+
+/* Ensure prev/next buttons don't overlap with middle area */
 .lb-nav a.lb-prev {
-  width: 34%;
+  width: 25%;  /* Reduced from 34% */
   left: 0;
   float: left;
   background: url(img_prev.png) left 48% no-repeat;
@@ -128,7 +140,7 @@ body:after {
 }
 
 .lb-nav a.lb-next {
-  width: 64%;
+  width: 25%;  /* Reduced from 64% */
   right: 0;
   float: right;
   background: url(img_next.png) right 48% no-repeat;
@@ -146,17 +158,17 @@ body:after {
 }
 
 .lb-dataContainer {
-  display: inline-block;
-  margin: 0 auto;
-  padding-top: 5px;
+  margin-top: 5px;
   *zoom: 1;
   width: 100%;
+  float: left;
   -moz-border-radius-bottomleft: 4px;
   -webkit-border-bottom-left-radius: 4px;
   border-bottom-left-radius: 4px;
   -moz-border-radius-bottomright: 4px;
   -webkit-border-bottom-right-radius: 4px;
   border-bottom-right-radius: 4px;
+  position: relative;
 }
 
 .lb-dataContainer:after {
@@ -194,10 +206,11 @@ body:after {
 
 .lb-data .lb-close {
   display: block;
-  float: right;
-  width: 30px;
-  height: 30px;
-  background: url(img_close.png) top right no-repeat;
+  width: 15px;
+  height: 15px;
+  background: url(img_close.png) center center no-repeat;
+  background-size: contain;
+  background-color: white;
   text-align: right;
   outline: none;
   filter: progid:DXImageTransform.Microsoft.Alpha(Opacity=70);
@@ -206,10 +219,191 @@ body:after {
   -moz-transition: opacity 0.2s;
   -o-transition: opacity 0.2s;
   transition: opacity 0.2s;
+  position: absolute;
+  top: 0;
+  right: 10px;
 }
 
 .lb-data .lb-close:hover {
   cursor: pointer;
   filter: progid:DXImageTransform.Microsoft.Alpha(Opacity=100);
   opacity: 1;
+}
+
+/* Add maximize button styles */
+.lb-maximize {
+  display: none;
+}
+
+/* Maximized state styles */
+.lightbox.maximized {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100% !important;
+  height: 100% !important;
+  margin: 0;
+  padding: 0;
+  z-index: 10000;
+  overflow: hidden;
+}
+
+.lightbox.maximized .lb-outerContainer {
+  width: 100% !important;
+  height: 100% !important;
+  margin: 0;
+  padding: 0;
+  background-color: transparent;
+  overflow: hidden;  /* Prevent scrolling here */
+}
+
+.lightbox.maximized .lb-container {
+  width: 100% !important;
+  height: 100% !important;
+  padding: 0;
+  display: flex;
+  align-items: flex-start;  /* Change from center to flex-start */
+  justify-content: center;
+  overflow: hidden;  /* Prevent scrolling here */
+}
+
+.lightbox.maximized .lb-container.lb-full-width {
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+  overscroll-behavior: contain;
+  position: relative;
+  pointer-events: auto;
+  touch-action: pan-y;
+  padding-top: 0;
+  margin-top: 0;
+  display: block;  /* Change from flex to block */
+}
+
+.lightbox.maximized .lb-image {
+  max-width: 100%;
+  width: auto;
+  height: auto;
+  margin: 0;
+  padding: 0;
+  object-fit: contain;
+  display: block;
+  pointer-events: none;  /* Prevent image from capturing events */
+  position: relative;  /* Add position relative */
+  top: 0;  /* Ensure it starts from the top */
+}
+
+/* Customize scrollbar for maximized view */
+.lightbox.maximized .lb-container.lb-full-width::-webkit-scrollbar {
+  width: 10px;
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 12;  /* Higher than navigation */
+}
+
+.lightbox.maximized .lb-container.lb-full-width::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.lightbox.maximized .lb-container.lb-full-width::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 5px;
+}
+
+.lightbox.maximized .lb-container.lb-full-width::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.lightbox.maximized .lb-dataContainer {
+  display: none;
+}
+
+/* Add styles for navigation in maximized state */
+.lightbox.maximized .lb-nav {
+  display: block !important;
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: calc(100% - 10px);
+  z-index: 10000;
+  pointer-events: none;  /* Allow events to pass through to container */
+}
+
+.lightbox.maximized .lb-nav a,
+.lightbox.maximized .lb-nav .lb-middle {
+  pointer-events: auto;  /* Re-enable pointer events for navigation elements */
+}
+
+.lightbox.maximized .lb-nav a.lb-prev {
+  width: 25%;
+  left: 0;
+  float: left;
+  background: url(img_prev.png) left 48% no-repeat;
+  filter: progid:DXImageTransform.Microsoft.Alpha(Opacity=0);
+  opacity: 0;
+  -webkit-transition: opacity 0.6s;
+  -moz-transition: opacity 0.6s;
+  -o-transition: opacity 0.6s;
+  transition: opacity 0.6s;
+}
+
+.lightbox.maximized .lb-nav a.lb-prev:hover {
+  filter: progid:DXImageTransform.Microsoft.Alpha(Opacity=100);
+  opacity: 1;
+}
+
+.lightbox.maximized .lb-nav a.lb-next {
+  width: 25%;
+  right: 0;
+  float: right;
+  background: url(img_next.png) right 48% no-repeat;
+  filter: progid:DXImageTransform.Microsoft.Alpha(Opacity=0);
+  opacity: 0;
+  -webkit-transition: opacity 0.6s;
+  -moz-transition: opacity 0.6s;
+  -o-transition: opacity 0.6s;
+  transition: opacity 0.6s;
+}
+
+.lightbox.maximized .lb-nav a.lb-next:hover {
+  filter: progid:DXImageTransform.Microsoft.Alpha(Opacity=100);
+  opacity: 1;
+}
+
+.lightbox.maximized .lb-nav .lb-middle {
+  position: absolute;
+  top: 0;
+  left: 25%;
+  width: 50%;
+  height: 100%;
+  cursor: zoom-out;  /* Change cursor to zoom-out for view 3 */
+  z-index: 11;
+  display: block;
+}
+
+.lb-zoom-controls {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 999;
+}
+
+.lb-zoom-in:hover, .lb-zoom-out:hover {
+  opacity: 1;
+}
+
+.lb-zoom-out {
+  display: none;
+}
+
+.maximized .lb-zoom-in {
+  display: none;
+}
+
+.maximized .lb-zoom-out {
+  display: inline-block;
 }
