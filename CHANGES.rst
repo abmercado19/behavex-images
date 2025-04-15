@@ -6,8 +6,8 @@ Version: 3.1.1
 
 ENHANCEMENTS:
 
-* Enabling maximizing a selected image, increasing the image size and hiding the logs associated with the image.
-* Zoom in and zoom out performed by clicking on the image.
+* Enabling maximizing an image, making it full screen and hiding the logs associated with the image.
+* Enabling zoom in and zoom out by clicking on the image.
 
 Version: 3.0.10
 -------------------------------------------------------------------------------
