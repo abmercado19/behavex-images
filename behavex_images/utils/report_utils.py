@@ -187,18 +187,28 @@ def add_image_to_report_story(context):
 
     Parameters:
     context (object): The context object which contains various attributes used in the function, including the image stream.
-
+    
     Returns:
     None
     """
     if context.bhximgs_image_stream:
         step_line = getattr(context, 'bhximgs_current_step_line', 0)
         key = f"{str(step_line).zfill(5)}{str(context.bhximgs_attached_images_idx).zfill(5)}"
-        name = os.path.join(context.bhximgs_attached_images_folder, key) + '.png'
+        
+        # Check if formatter is specified in context
+        formatter = getattr(context, 'bhximgs_formatter', None)
+        if formatter:
+            # Extract scenario hash from the log_path (which is the scenario directory)
+            scenario_hash = os.path.basename(context.bhximgs_attached_images_folder)
+            name = os.path.join(os.getenv('LOGS'), f"{scenario_hash}_{key}.png")
+        else:
+            # Original behavior - save in scenario folder
+            name = os.path.join(context.bhximgs_attached_images_folder, key) + '.png'
+            
         context.bhximgs_attached_images[key] = {
             'img_stream': context.bhximgs_image_stream,
             'name': name,
-            'steps': context.bhximgs_previous_steps,
+            'steps': context.bhximgs_previous_steps[:],
         }
 
 

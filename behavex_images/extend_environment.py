@@ -90,7 +90,8 @@ def before_all(context):
     """
     This function is executed before all features are run.
 
-    It attempts to copy gallery utilities to the appropriate location. If an exception occurs during this process, it is logged and the execution continues.
+    It initializes the screenshot utilities flag and copies gallery utilities only if needed.
+    If an exception occurs during this process, it is logged and the execution continues.
 
     Parameters:
     context (object): The context object which contains various attributes used in the function.
@@ -99,7 +100,10 @@ def before_all(context):
     None
     """
     try:
-        copy_gallery_utilities()
+        # Initialize the flag - by default we need screenshot utils unless a formatter is specified
+        context.bhximgs_needs_screenshot_utils = not bool(get_param('formatter', None))
+        if context.bhximgs_needs_screenshot_utils:
+            copy_gallery_utilities()
     except Exception as ex:
         bhx_benv._log_exception_and_continue('before_all (behavex-images)', exception=ex)
 
@@ -136,7 +140,7 @@ def before_scenario(context, scenario):
     try:
         # Setup initial configuration for attaching images and logging
         context.bhximgs_image_hash = None
-        context.bhximgs_attached_images_folder = context.log_path
+        context.bhximgs_attached_images_folder = scenario.identifier_hash
         context.bhximgs_attached_images_idx = 0
         context.bhximgs_attached_images = {}
         context.bhximgs_previous_steps = []
@@ -145,6 +149,11 @@ def before_scenario(context, scenario):
         context.bhximgs_step_log_handler = logging.StreamHandler(context.bhximgs_log_stream)
         # Initialize the last feature line number
         context.bhximgs_last_feature_line = 0
+        
+        # Check for formatter in command line arguments
+        context.bhximgs_formatter = get_param('formatter', None)
+        # Set flag indicating if screenshot utilities are needed (not needed if formatter is specified)
+        context.bhximgs_needs_screenshot_utils = not bool(context.bhximgs_formatter)
 
         # Adding a new log handler to logger
         context.bhximgs_step_log_handler.setFormatter(bhx_benv._get_log_formatter())
@@ -197,7 +206,9 @@ def after_scenario(context, scenario):
     """
     This function is executed after each scenario is run.
 
-    If the context indicates that images should be attached to the report, it dumps the captured images to disk and creates a gallery of these images.
+    If the context indicates that images should be attached to the report:
+    - Always dumps the captured images to disk
+    - Creates a gallery of these images only if screenshot utilities are needed (i.e. no formatter specified)
 
     Parameters:
     context (object): The context object which contains various attributes used in the function.
@@ -211,13 +222,17 @@ def after_scenario(context, scenario):
                 ((context.bhximgs_attachments_condition == AttachmentsCondition.ALWAYS) or
                  (context.bhximgs_attachments_condition == AttachmentsCondition.ONLY_ON_FAILURE and scenario.status == 'failed'))
         ):
+            # Always dump images to disk - they may be needed by the formatter
             report_utils.dump_images_to_disk(context)
-            captions = report_utils.get_captions(context)
-            report_utils.create_gallery(
-                context.bhximgs_attached_images_folder,
-                title=scenario.name,
-                captions=captions,
-            )
+            
+            # Only create gallery if screenshot utilities are needed
+            if context.bhximgs_needs_screenshot_utils:
+                captions = report_utils.get_captions(context)
+                report_utils.create_gallery(
+                    context.bhximgs_attached_images_folder,
+                    title=scenario.name,
+                    captions=captions
+                )
         close_log_handler(context.bhximgs_step_log_handler)
     except Exception as ex:
         bhx_benv._log_exception_and_continue('after_scenario (behavex-images)', exception=ex)
@@ -258,7 +273,9 @@ def copy_gallery_utilities():
     """
     This function copies the gallery utilities to the appropriate location.
 
-    It checks if the destination path exists. If it does not, it creates the path and copies the gallery utilities from the source path to the destination path. If the destination path already exists, it removes the existing files before copying the new ones.
+    It checks if the destination path exists. If it does not, it creates the path and copies the gallery utilities 
+    from the source path to the destination path. If the destination path already exists, it removes the existing 
+    files before copying the new ones.
 
     Parameters:
     None
