@@ -192,7 +192,8 @@ def add_image_to_report_story(context):
     None
     """
     if context.bhximgs_image_stream:
-        key = str(context.bhximgs_attached_images_idx).zfill(4)
+        step_line = getattr(context, 'bhximgs_current_step_line', 0)
+        key = f"{str(step_line).zfill(5)}{str(context.bhximgs_attached_images_idx).zfill(5)}"
         name = os.path.join(context.bhximgs_attached_images_folder, key) + '.png'
         context.bhximgs_attached_images[key] = {
             'img_stream': context.bhximgs_image_stream,

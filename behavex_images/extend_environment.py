@@ -58,6 +58,10 @@ def extend_behave_hooks():
             behave_run_hook(self, name, context, *args)
             # noinspection PyUnresolvedReferences
             behavex_images_env.before_scenario(context, *args)
+        elif name == 'before_step':
+            behave_run_hook(self, name, context, *args)
+            # noinspection PyUnresolvedReferences
+            behavex_images_env.before_step(context, *args)
         elif name == 'after_step':
             behave_run_hook(self, name, context, *args)
             # noinspection PyUnresolvedReferences
@@ -139,6 +143,8 @@ def before_scenario(context, scenario):
         context.bhximgs_image_stream = None
         context.bhximgs_log_stream = StringIO()
         context.bhximgs_step_log_handler = logging.StreamHandler(context.bhximgs_log_stream)
+        # Initialize the last feature line number
+        context.bhximgs_last_feature_line = 0
 
         # Adding a new log handler to logger
         context.bhximgs_step_log_handler.setFormatter(bhx_benv._get_log_formatter())
@@ -151,7 +157,8 @@ def before_step(context, step):
     """
     This function is executed before each step in a scenario is run.
 
-    Currently, this function does not perform any operations. It can be used to set up any necessary state or perform any configuration that should be done before a step is run.
+    It stores the current step's line number in the context for use in image naming.
+    If the step is not from a feature file, it uses the last known feature file line number.
 
     Parameters:
     context (object): The context object which contains various attributes used in the function.
@@ -160,7 +167,14 @@ def before_step(context, step):
     Returns:
     None
     """
-    pass
+    try:
+        if hasattr(step, 'filename') and '.feature' in step.filename:
+            context.bhximgs_last_feature_line = step.line if hasattr(step, 'line') else 0
+            context.bhximgs_current_step_line = context.bhximgs_last_feature_line
+        else:
+            context.bhximgs_current_step_line = context.bhximgs_last_feature_line
+    except Exception as ex:
+        bhx_benv._log_exception_and_continue('before_step (behavex-images)', exception=ex)
 
 
 def after_step(context, step):
