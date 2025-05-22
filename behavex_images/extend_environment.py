@@ -3,6 +3,7 @@ import logging
 import os
 import shutil
 import sys
+import types
 
 from behave.runner import ModelRunner
 from behavex import environment as bhx_benv
@@ -21,14 +22,19 @@ except ImportError:
 FWK_PATH = os.getenv('BEHAVEX_PATH')
 
 hooks_already_set = False
+bhx_original_hooks = {}
 
 
 def extend_behave_hooks():
     """
-    This function extends the Behave hooks with behavex-images hooks code.
-
-    It modifies the run_hook method of the ModelRunner class to include additional hooks from the BehaveX environment.
-    The hooks are only set once, and subsequent calls to this function will not modify the run_hook method again.
+    This function integrates behavex-images hooks with BehaveX's hook system.
+    
+    It uses a two-phase approach to ensure compatibility regardless of initialization order:
+    1. First stores references to BehaveX hooks (or sets up to capture them later)
+    2. Then creates wrapper functions that safely call both sets of hooks in the proper order
+    
+    This approach handles cases where BehaveX hasn't initialized its hooks yet and
+    prevents double execution of hooks.
 
     Parameters:
     None
@@ -36,54 +42,94 @@ def extend_behave_hooks():
     Returns:
     None
     """
-    global hooks_already_set
-    behave_run_hook = ModelRunner.run_hook
+    global hooks_already_set, bhx_original_hooks
+    
+    # Don't proceed if hooks are already set
+    if hooks_already_set:
+        return
+        
+    # Get reference to this module for calling hooks
     behavex_images_env = sys.modules[__name__]
     is_dry_run = True if os.environ.get('DRY_RUN', "false").lower() == "true" else False
     
-    def run_hook(self, name, context, *args):
-        if is_dry_run:
-            behave_run_hook(self, name, context, *args)
-            return
-
-        if name == 'before_all':
-            # noinspection PyUnresolvedReferences
-            behavex_images_env.before_all(context)
-            behave_run_hook(self, name, context, *args)
-        elif name == 'before_feature':
-            behave_run_hook(self, name, context, *args)
-            # noinspection PyUnresolvedReferences
-            behavex_images_env.before_feature(context, *args)
-        elif name == 'before_scenario':
-            behave_run_hook(self, name, context, *args)
-            # noinspection PyUnresolvedReferences
-            behavex_images_env.before_scenario(context, *args)
-        elif name == 'before_step':
-            behave_run_hook(self, name, context, *args)
-            # noinspection PyUnresolvedReferences
-            behavex_images_env.before_step(context, *args)
-        elif name == 'after_step':
-            behave_run_hook(self, name, context, *args)
-            # noinspection PyUnresolvedReferences
-            behavex_images_env.after_step(context, *args)
-        elif name == 'after_scenario':
-            behave_run_hook(self, name, context, *args)
-            # noinspection PyUnresolvedReferences
-            behavex_images_env.after_scenario(context, *args)
-        elif name == 'after_feature':
-            # noinspection PyUnresolvedReferences
-            behavex_images_env.after_feature(context, *args)
-            behave_run_hook(self, name, context, *args)
-        elif name == 'after_all':
-            # noinspection PyUnresolvedReferences
-            behavex_images_env.after_all(context, *args)
-            behave_run_hook(self, name, context, *args)
-        else:
-            behave_run_hook(self, name, context, *args)
-
-    if not hooks_already_set:
-        hooks_already_set = True
-        ModelRunner.run_hook = run_hook
+    # Function to create a hook wrapper that will safely call both hooks in the right order
+    def create_hook_wrapper(hook_name, bhx_first=True):
+        """Create a wrapper for the specified hook type
+        
+        Args:
+            hook_name: The name of the hook (e.g., 'before_all')
+            bhx_first: Whether to call BehaveX's hook first (True) or behavex-images hook first (False)
+            
+        Returns:
+            A wrapper function that handles the proper hook execution order
+        """
+        # Get the behavex-images hook function
+        img_hook = getattr(behavex_images_env, hook_name, lambda *args: None)
+        
+        def wrapper(*args):
+            # Get the current BehaveX hook (which might have been set after our initialization)
+            orig_hook = bhx_original_hooks.get(hook_name)
+            if orig_hook is None:
+                # If we don't have a reference to the original, get it now
+                orig_hook = getattr(bhx_benv, hook_name, lambda *args: None)
+                bhx_original_hooks[hook_name] = orig_hook
+            
+            result = None
+            
+            try:
+                if bhx_first:
+                    # Call BehaveX hook first
+                    result = orig_hook(*args)
+                    
+                    # Then call behavex-images hook
+                    if not is_dry_run:
+                        img_hook(*args)
+                else:
+                    # Call behavex-images hook first
+                    if not is_dry_run:
+                        img_hook(*args)
+                        
+                    # Then call BehaveX hook
+                    result = orig_hook(*args)
+            except Exception as ex:
+                bhx_benv._log_exception_and_continue(f'{hook_name} (behavex-images)', exception=ex)
+                
+                # If exception occurred before calling BehaveX hook, call it now
+                if not bhx_first and result is None:
+                    result = orig_hook(*args)
+                
+            return result
+            
+        return wrapper
+        
+    # Create wrappers for all hook types with the right execution order
+    hooks_to_wrap = {
+        # BehaveX hook first
+        'before_feature': True,
+        'before_scenario': True,
+        'before_step': True,
+        'after_step': True,
+        'after_scenario': True,
+        
+        # behavex-images hook first
+        'before_all': False,
+        'after_feature': False,
+        'after_all': False
+    }
+    
+    # Create and register all hook wrappers
+    for hook_name, bhx_first in hooks_to_wrap.items():
+        # Create wrapper function
+        wrapper = create_hook_wrapper(hook_name, bhx_first)
+        
+        # Save reference to current BehaveX hook function if it exists
+        if hasattr(bhx_benv, hook_name) and isinstance(getattr(bhx_benv, hook_name), types.FunctionType):
+            bhx_original_hooks[hook_name] = getattr(bhx_benv, hook_name)
+            
+        # Replace the BehaveX hook with our wrapper
+        setattr(bhx_benv, hook_name, wrapper)
+    
+    hooks_already_set = True
 
 
 def before_all(context):
@@ -140,7 +186,7 @@ def before_scenario(context, scenario):
     try:
         # Setup initial configuration for attaching images and logging
         context.bhximgs_image_hash = None
-        context.bhximgs_attached_images_folder = scenario.identifier_hash
+        context.bhximgs_attached_images_folder = context.log_path
         context.bhximgs_attached_images_idx = 0
         context.bhximgs_attached_images = {}
         context.bhximgs_previous_steps = []
@@ -318,7 +364,8 @@ def close_log_handler(handler):
 
 
 # This line of code calls the function 'extend_behave_hooks'.
-# The 'extend_behave_hooks' function extends the Behave hooks with behavex-images hooks code.
-# It modifies the run_hook method of the ModelRunner class to include additional hooks from the BehaveX environment.
-# The hooks are only set once, and subsequent calls to this function will not modify the run_hook method again.
+# The 'extend_behave_hooks' function extends the BehaveX hooks with behavex-images hooks code.
+# It saves the original BehaveX environment hooks and replaces them with
+# functions that call both the original BehaveX hook and the behavex-images hook.
+# The hooks are only set once, and subsequent calls to this function will not modify hooks again.
 extend_behave_hooks()
