@@ -8,6 +8,7 @@ ENHANCEMENTS:
 
 * Improvement done to determine the step line number associated with each image in gallery.
 * Improvement done in the way hooks are executed, to properly handle the case where BehaveX hooks are not initialized yet.
+* Adding support for BehaveX report formatters.
 
 Version: 3.1.1
 -------------------------------------------------------------------------------
