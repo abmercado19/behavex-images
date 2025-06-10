@@ -184,9 +184,12 @@ def before_scenario(context, scenario):
     None
     """
     try:
+        # Check for formatter in command line arguments
+        context.bhximgs_formatter = get_param('formatter', None)
+        # Set flag indicating if screenshot utilities are needed (not needed if formatter is specified)
+        context.bhximgs_needs_screenshot_utils = not bool(context.bhximgs_formatter)
         # Setup initial configuration for attaching images and logging
         context.bhximgs_image_hash = None
-        context.bhximgs_attached_images_folder = context.log_path
         context.bhximgs_attached_images_idx = 0
         context.bhximgs_attached_images = {}
         context.bhximgs_previous_steps = []
@@ -195,15 +198,11 @@ def before_scenario(context, scenario):
         context.bhximgs_step_log_handler = logging.StreamHandler(context.bhximgs_log_stream)
         # Initialize the last feature line number
         context.bhximgs_last_feature_line = 0
-        
-        # Check for formatter in command line arguments
-        context.bhximgs_formatter = get_param('formatter', None)
-        # Set flag indicating if screenshot utilities are needed (not needed if formatter is specified)
-        context.bhximgs_needs_screenshot_utils = not bool(context.bhximgs_formatter)
-
         # Adding a new log handler to logger
         context.bhximgs_step_log_handler.setFormatter(bhx_benv._get_log_formatter())
         logging.getLogger().addHandler(context.bhximgs_step_log_handler)
+        # Set the attached images folder to the scenario log path
+        context.bhximgs_attached_images_folder = context.log_path
     except Exception as ex:
         bhx_benv._log_exception_and_continue('before_scenario (behavex-images)', exception=ex)
 
