@@ -43,6 +43,7 @@ setup(
         'behavex',
         'numpy',
         'pillow',
+        'filelock; python_version>="3.8"',
     ],
     cmdclass={'install': Install},
     classifiers=[
