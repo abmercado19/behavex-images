@@ -41,7 +41,6 @@ setup(
     install_requires=[
         'behave',
         'behavex',
-        'numpy',
         'pillow',
         'filelock; python_version>="3.8"',
     ],
