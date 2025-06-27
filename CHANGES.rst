@@ -1,6 +1,16 @@
 Version History
 ===============================================================================
 
+Version: 3.2.1
+-------------------------------------------------------------------------------
+
+ENHANCEMENTS:
+
+* Improvement done in the way the gallery files are copied to the output directory.
+* Improvement done in before_scenario hook add robustness on the execution logic.
+* Removing dependency on numpy library.
+
+
 Version: 3.2.0
 -------------------------------------------------------------------------------
 

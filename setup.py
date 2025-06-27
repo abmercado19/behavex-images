@@ -20,7 +20,7 @@ setup(
     # Application name:
     name='behavex-images',
     # Version number (initial):
-    version='3.2.0',
+    version='3.2.1',
     license="MIT",
     # Application author details:
     author='Hernan Rey, Ana Mercado',
@@ -41,8 +41,8 @@ setup(
     install_requires=[
         'behave',
         'behavex',
-        'numpy',
         'pillow',
+        'filelock; python_version>="3.8"',
     ],
     cmdclass={'install': Install},
     classifiers=[

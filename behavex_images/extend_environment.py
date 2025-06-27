@@ -4,11 +4,20 @@ import os
 import shutil
 import sys
 import types
+from distutils.dir_util import copy_tree
+
+# Configure filelock logging to reduce verbosity
+logging.getLogger("filelock").setLevel(logging.INFO)
+
+try:
+    from filelock import FileLock
+    HAS_FILELOCK = True
+except ImportError:
+    HAS_FILELOCK = False
 
 from behave.runner import ModelRunner
 from behavex import environment as bhx_benv
 from behavex.outputs.report_utils import normalize_filename
-from behavex.utils import try_operate_descriptor
 from behavex.conf_mgr import get_param
 from behavex_images.image_attachments import AttachmentsCondition
 from behavex_images.utils import report_utils
@@ -18,8 +27,6 @@ try:
     from StringIO import StringIO
 except ImportError:
     from io import StringIO
-
-FWK_PATH = os.getenv('BEHAVEX_PATH')
 
 hooks_already_set = False
 bhx_original_hooks = {}
@@ -184,9 +191,11 @@ def before_scenario(context, scenario):
     None
     """
     try:
+        # Check for formatter in command line arguments
+        context.bhximgs_formatter = get_param('formatter', None)
+        # Note: bhximgs_needs_screenshot_utils is already set in before_all()
         # Setup initial configuration for attaching images and logging
         context.bhximgs_image_hash = None
-        context.bhximgs_attached_images_folder = context.log_path
         context.bhximgs_attached_images_idx = 0
         context.bhximgs_attached_images = {}
         context.bhximgs_previous_steps = []
@@ -195,15 +204,11 @@ def before_scenario(context, scenario):
         context.bhximgs_step_log_handler = logging.StreamHandler(context.bhximgs_log_stream)
         # Initialize the last feature line number
         context.bhximgs_last_feature_line = 0
-        
-        # Check for formatter in command line arguments
-        context.bhximgs_formatter = get_param('formatter', None)
-        # Set flag indicating if screenshot utilities are needed (not needed if formatter is specified)
-        context.bhximgs_needs_screenshot_utils = not bool(context.bhximgs_formatter)
-
         # Adding a new log handler to logger
         context.bhximgs_step_log_handler.setFormatter(bhx_benv._get_log_formatter())
         logging.getLogger().addHandler(context.bhximgs_step_log_handler)
+        # Set the attached images folder to the scenario log path
+        context.bhximgs_attached_images_folder = context.log_path
     except Exception as ex:
         bhx_benv._log_exception_and_continue('before_scenario (behavex-images)', exception=ex)
 
@@ -317,32 +322,67 @@ def after_all(context):
 
 def copy_gallery_utilities():
     """
-    This function copies the gallery utilities to the appropriate location.
+    Copies gallery utilities to the output directory in a multiprocess-safe manner.
 
-    It checks if the destination path exists. If it does not, it creates the path and copies the gallery utilities 
-    from the source path to the destination path. If the destination path already exists, it removes the existing 
-    files before copying the new ones.
+    It uses a file lock to ensure that only one process performs the copy. A
+    completion marker file is used to signal that the copy is finished, which
+    avoids unnecessary locking and copying in subsequent runs.
 
-    Parameters:
-    None
-
-    Returns:
-    None
+    If the `filelock` library is not available, it falls back to a non-locking
+    mechanism that is less safe but still attempts to prevent duplicate work by
+    checking for the completion marker.
     """
-    destination_path = os.path.join(os.getenv('LOGS'), 'image_attachments_utils')
-    if not os.path.exists(destination_path):
-        current_path = os.path.dirname(os.path.abspath(__file__))
-        image_attachments_path = [current_path, 'utils', 'support_files']
-        image_attachments_path = os.path.join(*image_attachments_path)
-        if os.path.exists(destination_path):
-            try_operate_descriptor(
-                destination_path, lambda: shutil.rmtree(destination_path)
-            )
+    logs_env = os.getenv('LOGS')
+    if not logs_env:
+        return
 
-        def execution():
-            return shutil.copytree(image_attachments_path, destination_path)
+    destination_path = os.path.join(logs_env, 'image_attachments_utils')
+    completion_marker = os.path.join(destination_path, '.copy_complete')
 
-        try_operate_descriptor(destination_path, execution)
+    if os.path.exists(completion_marker):
+        return
+
+    if HAS_FILELOCK:
+        lock_file_path = destination_path + '.lock'
+        try:
+            with FileLock(lock_file_path, timeout=10):
+                # Re-check after acquiring the lock to handle race conditions
+                if os.path.exists(completion_marker):
+                    return
+                _perform_copy(destination_path, completion_marker)
+        except Exception: # pylint: disable=broad-exception-caught
+            # If locking fails (e.g., timeout), assume another process is handling it.
+            pass
+    else:
+        # Fallback for when filelock is not installed. This is not fully
+        # race-proof, but _perform_copy is idempotent.
+        try:
+            _perform_copy(destination_path, completion_marker)
+        except OSError: # pylint: disable=broad-exception-caught
+            # Silently ignore errors, as another process might be copying.
+            pass
+
+
+def _perform_copy(destination_path, completion_marker):
+    """
+    Executes the file copy operation and creates a completion marker.
+
+    It uses the most efficient and safe method available to copy the directory tree.
+    """
+    current_path = os.path.dirname(os.path.abspath(__file__))
+    source_path = os.path.join(current_path, 'utils', 'support_files')
+
+    # The calling function `copy_gallery_utilities` already handles exceptions
+    # that might occur during the copy operation. For Python 3.8+,
+    # copytree has dirs_exist_ok. For older versions,
+    # distutils.dir_util.copy_tree provides similar behavior.
+    if sys.version_info >= (3, 8):
+        shutil.copytree(source_path, destination_path, dirs_exist_ok=True)
+    else:
+        copy_tree(source_path, destination_path)
+    # Create a marker to indicate that the copy is complete.
+    with open(completion_marker, 'w') as f:
+        f.write('complete')
 
 
 def close_log_handler(handler):
