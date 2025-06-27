@@ -5,6 +5,12 @@ import shutil
 import sys
 import types
 
+try:
+    from filelock import FileLock
+    HAS_FILELOCK = True
+except ImportError:
+    HAS_FILELOCK = False
+
 from behave.runner import ModelRunner
 from behavex import environment as bhx_benv
 from behavex.outputs.report_utils import normalize_filename
@@ -316,11 +322,10 @@ def after_all(context):
 
 def copy_gallery_utilities():
     """
-    This function copies the gallery utilities to the appropriate location.
+    This function copies the gallery utilities to the appropriate location in a multiprocess-safe way.
 
-    It checks if the destination path exists. If it does not, it creates the path and copies the gallery utilities 
-    from the source path to the destination path. If the destination path already exists, it removes the existing 
-    files before copying the new ones.
+    Uses file locking to ensure only one process copies the utilities at a time.
+    If filelock is not available, falls back to simple existence check.
 
     Parameters:
     None
@@ -328,20 +333,42 @@ def copy_gallery_utilities():
     Returns:
     None
     """
-    destination_path = os.path.join(os.getenv('LOGS'), 'image_attachments_utils')
-    if not os.path.exists(destination_path):
-        current_path = os.path.dirname(os.path.abspath(__file__))
-        image_attachments_path = [current_path, 'utils', 'support_files']
-        image_attachments_path = os.path.join(*image_attachments_path)
+    logs_env = os.getenv('LOGS')
+    if not logs_env:
+        return
+        
+    destination_path = os.path.join(logs_env, 'image_attachments_utils')
+    
+    # If filelock is available, use it for proper locking
+    if HAS_FILELOCK:
+        lock_file_path = destination_path + '.lock'
+        
+        try:
+            with FileLock(lock_file_path, timeout=10):
+                if os.path.exists(destination_path):
+                    return
+                _copy_gallery_files(destination_path)
+        except Exception:
+            # If locking fails, just continue - another process might be handling it
+            pass
+    else:
+        # Fallback: simple existence check (not perfect but better than nothing)
         if os.path.exists(destination_path):
-            try_operate_descriptor(
-                destination_path, lambda: shutil.rmtree(destination_path)
-            )
+            return
+        _copy_gallery_files(destination_path)
 
-        def execution():
-            return shutil.copytree(image_attachments_path, destination_path)
 
-        try_operate_descriptor(destination_path, execution)
+def _copy_gallery_files(destination_path):
+    """Helper function to copy gallery files."""
+    current_path = os.path.dirname(os.path.abspath(__file__))
+    image_attachments_path = os.path.join(current_path, 'utils', 'support_files')
+    
+    def execution():
+        if os.path.exists(destination_path):
+            shutil.rmtree(destination_path)
+        return shutil.copytree(image_attachments_path, destination_path)
+    
+    try_operate_descriptor(destination_path, execution)
 
 
 def close_log_handler(handler):
