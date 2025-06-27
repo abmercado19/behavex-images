@@ -6,6 +6,9 @@ import sys
 import types
 from distutils.dir_util import copy_tree
 
+# Configure filelock logging to reduce verbosity
+logging.getLogger("filelock").setLevel(logging.INFO)
+
 try:
     from filelock import FileLock
     HAS_FILELOCK = True
