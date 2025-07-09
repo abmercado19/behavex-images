@@ -25,7 +25,7 @@ jobs:
     - name: Checkout behavex repository
       uses: actions/checkout@v4
       with:
-        repository: hrcorrea/behavex
+        repository: hrcorval/behavex
         path: behavex
     
     - name: Set up Python ${{ matrix.python-version }}
