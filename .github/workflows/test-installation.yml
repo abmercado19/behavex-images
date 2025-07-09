@@ -49,10 +49,10 @@ jobs:
         # Test 1: Verify behavex-images imports correctly
         python -c "
         import behavex_images
-        print('✓ behavex-images imported successfully')
+        print('PASS: behavex-images imported successfully')
         from behavex_images.image_attachments import AttachmentsCondition
-        print('✓ AttachmentsCondition imported successfully')
-        print('✓ Basic import test passed')
+        print('PASS: AttachmentsCondition imported successfully')
+        print('PASS: Basic import test passed')
         "
         
         # Test 2: Run a simple behavex command to verify integration
@@ -61,6 +61,6 @@ jobs:
         
         # Test 3: Run behavex with image attachments on a simple test
         echo "Testing behavex with image attachments..."
-        behavex ./tests/features/secondary_features/simple_image_tests.feature -o /tmp/out2 -t @IMAGE_ATTACHMENT
+        behavex ./tests/features/secondary_features/simple_image_tests.feature -o /tmp/out2 -t "@IMAGE_ATTACHMENT"
         
-        echo "✓ All installation and integration tests passed"
+        echo "PASS: All installation and integration tests passed"
