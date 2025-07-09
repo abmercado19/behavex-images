@@ -41,25 +41,26 @@ jobs:
         cd ../behavex
         python -m pip install -e .
     
-    - name: Run behavex tests with image attachments
+    - name: Test behavex-images installation and basic functionality
       run: |
         cd behavex
-        if [ -f "./tests/features/image_attachment_tests.feature" ]; then
-          echo "Running image attachment tests..."
-          behavex ./tests/features/image_attachment_tests.feature
-        else
-          echo "Image attachment tests not found, looking for alternative test files..."
-          # Look for any test files that might test image attachments
-          find ./tests -name "*image*" -type f | head -10
-          find ./tests -name "*attach*" -type f | head -10
-          
-          # Try running a simple test to verify integration
-          echo "Testing basic integration..."
-          python -c "
-          import behavex_images
-          print('✓ behavex-images imported successfully')
-          from behavex_images.image_attachments import AttachmentsCondition
-          print('✓ AttachmentsCondition imported successfully')
-          print('✓ Integration test passed')
-          "
-        fi
+        echo "Testing behavex-images installation and basic functionality..."
+        
+        # Test 1: Verify behavex-images imports correctly
+        python -c "
+        import behavex_images
+        print('✓ behavex-images imported successfully')
+        from behavex_images.image_attachments import AttachmentsCondition
+        print('✓ AttachmentsCondition imported successfully')
+        print('✓ Basic import test passed')
+        "
+        
+        # Test 2: Run a simple behavex command to verify integration
+        echo "Testing basic behavex execution..."
+        behavex ./tests/features/secondary_features/passing_tests.feature -o test_output --show-summary
+        
+        # Test 3: Run behavex with image attachments on a simple test
+        echo "Testing behavex with image attachments..."
+        behavex ./tests/features/secondary_features/simple_image_tests.feature -o test_output_images -t @IMAGE_ATTACHMENT
+        
+        echo "✓ All installation and integration tests passed"
