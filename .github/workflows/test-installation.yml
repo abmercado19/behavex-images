@@ -57,10 +57,10 @@ jobs:
         
         # Test 2: Run a simple behavex command to verify integration
         echo "Testing basic behavex execution..."
-        behavex ./tests/features/secondary_features/passing_tests.feature -o test_output
+        behavex ./tests/features/secondary_features/passing_tests.feature -o /tmp/out1
         
         # Test 3: Run behavex with image attachments on a simple test
         echo "Testing behavex with image attachments..."
-        behavex ./tests/features/secondary_features/simple_image_tests.feature -o test_output_images -t @IMAGE_ATTACHMENT
+        behavex ./tests/features/secondary_features/simple_image_tests.feature -o /tmp/out2 -t @IMAGE_ATTACHMENT
         
         echo "✓ All installation and integration tests passed"
