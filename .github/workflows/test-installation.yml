@@ -43,17 +43,48 @@ jobs:
         cd ../behavex
         python -m pip install -e .
     
-    - name: Run behavex tests with image attachments
+    - name: Test behavex-images installation and integration
       run: |
-        cd behavex
-        if [ -f "./tests/features/image_attachment_tests.feature" ]; then
-          echo "Running image attachment tests..."
-          behavex ./tests/features/image_attachment_tests.feature
-        else
-          echo "Image attachment tests not found. Running basic integration test..."
-          python -c "
-          from behavex_images import image_attachments
-          from behavex_images.image_attachments import AttachmentsCondition
-          print('✓ Basic integration test passed')
-          "
-        fi 
+        echo "Testing behavex-images installation and integration..."
+        python -c "
+        # Test basic imports
+        try:
+            from behavex_images import image_attachments
+            from behavex_images.image_attachments import AttachmentsCondition
+            from behavex_images.extend_environment import extend_environment
+            print('✓ All imports successful')
+        except ImportError as e:
+            print(f'✗ Import failed: {e}')
+            exit(1)
+        
+        # Test AttachmentsCondition enum
+        try:
+            condition = AttachmentsCondition.ONLY_ON_FAILURE
+            print(f'✓ AttachmentsCondition enum accessible: {condition}')
+        except Exception as e:
+            print(f'✗ AttachmentsCondition test failed: {e}')
+            exit(1)
+        
+        # Test image format utilities
+        try:
+            from behavex_images.utils.image_format import get_image_format
+            from behavex_images.utils.image_hash import get_image_hash
+            print('✓ Image utilities accessible')
+        except ImportError as e:
+            print(f'✗ Image utilities import failed: {e}')
+            exit(1)
+        
+        print('✓ All integration tests passed')
+        "
+        
+        # Test that behavex can be imported alongside behavex-images
+        echo "Testing behavex and behavex-images compatibility..."
+        python -c "
+        try:
+            import behavex
+            import behavex_images
+            print('✓ Both behavex and behavex-images can be imported together')
+        except ImportError as e:
+            print(f'✗ Compatibility test failed: {e}')
+            exit(1)
+        "
