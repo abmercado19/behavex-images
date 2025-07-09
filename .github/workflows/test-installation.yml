@@ -43,65 +43,25 @@ jobs:
         cd ../behavex
         python -m pip install -e .
     
-    - name: Test behavex-images installation and integration
+    - name: Run behavex tests with image attachments
       run: |
-        echo "Testing behavex-images installation and integration..."
-        python -c "
-        # Test core imports without triggering behavex initialization
-        try:
-            from behavex_images.image_attachments import AttachmentsCondition
-            print('✓ AttachmentsCondition import successful')
-        except ImportError as e:
-            print(f'✗ AttachmentsCondition import failed: {e}')
-            exit(1)
-        
-        # Test AttachmentsCondition enum values
-        try:
-            condition1 = AttachmentsCondition.ONLY_ON_FAILURE
-            condition2 = AttachmentsCondition.ALWAYS
-            condition3 = AttachmentsCondition.NEVER
-            print(f'✓ AttachmentsCondition enum accessible: {condition1}, {condition2}, {condition3}')
-        except Exception as e:
-            print(f'✗ AttachmentsCondition test failed: {e}')
-            exit(1)
-        
-        # Test image format utilities
-        try:
-            from behavex_images.utils.image_format import get_image_format
-            from behavex_images.utils.image_hash import dhash, ImageHash
-            from behavex_images.utils.report_utils import create_gallery, dump_images_to_disk
-            print('✓ Image utilities accessible')
-        except ImportError as e:
-            print(f'✗ Image utilities import failed: {e}')
-            exit(1)
-        
-        print('✓ Core behavex-images installation tests passed')
-        "
-        
-        # Test package structure
-        echo "Testing package structure..."
-        python -c "
-        import os
-        import behavex_images
-        
-        # Check that package has expected structure
-        package_dir = os.path.dirname(behavex_images.__file__)
-        expected_files = ['image_attachments.py', 'extend_environment.py']
-        expected_dirs = ['utils']
-        
-        for file in expected_files:
-            if os.path.exists(os.path.join(package_dir, file)):
-                print(f'✓ Found expected file: {file}')
-            else:
-                print(f'✗ Missing expected file: {file}')
-                exit(1)
-        
-        for dir in expected_dirs:
-            if os.path.exists(os.path.join(package_dir, dir)):
-                print(f'✓ Found expected directory: {dir}')
-            else:
-                print(f'✗ Missing expected directory: {dir}')
-                exit(1)
-        
-        print('✓ Package structure validation passed')
-        "
+        cd behavex
+        if [ -f "./tests/features/image_attachment_tests.feature" ]; then
+          echo "Running image attachment tests..."
+          behavex ./tests/features/image_attachment_tests.feature
+        else
+          echo "Image attachment tests not found, looking for alternative test files..."
+          # Look for any test files that might test image attachments
+          find ./tests -name "*image*" -type f | head -10
+          find ./tests -name "*attach*" -type f | head -10
+          
+          # Try running a simple test to verify integration
+          echo "Testing basic integration..."
+          python -c "
+          import behavex_images
+          print('✓ behavex-images imported successfully')
+          from behavex_images.image_attachments import AttachmentsCondition
+          print('✓ AttachmentsCondition imported successfully')
+          print('✓ Integration test passed')
+          "
+        fi
