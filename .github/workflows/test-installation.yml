@@ -1,0 +1,59 @@
+name: Test Installation and Integration
+
+on:
+  push:
+    branches: [ main, develop, release_* ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+jobs:
+  test-with-behavex:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12', '3.13']
+      fail-fast: false
+    
+    steps:
+    - name: Checkout behavex-images repository
+      uses: actions/checkout@v4
+      with:
+        path: behavex-images
+    
+    - name: Checkout behavex repository
+      uses: actions/checkout@v4
+      with:
+        repository: hrcorrea/behavex
+        path: behavex
+    
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+    
+    - name: Install behavex-images and behavex
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install behave behavex pillow
+        cd behavex-images
+        python setup.py sdist
+        python -m pip install dist/behavex-images-3.2.1.tar.gz
+        cd ../behavex
+        python -m pip install -e .
+    
+    - name: Run behavex tests with image attachments
+      run: |
+        cd behavex
+        if [ -f "./tests/features/image_attachment_tests.feature" ]; then
+          echo "Running image attachment tests..."
+          behavex ./tests/features/image_attachment_tests.feature
+        else
+          echo "Image attachment tests not found. Running basic integration test..."
+          python -c "
+          from behavex_images import image_attachments
+          from behavex_images.image_attachments import AttachmentsCondition
+          print('✓ Basic integration test passed')
+          "
+        fi 

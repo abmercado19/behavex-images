@@ -4,7 +4,6 @@ import os
 import shutil
 import sys
 import types
-from distutils.dir_util import copy_tree
 
 # Configure filelock logging to reduce verbosity
 logging.getLogger("filelock").setLevel(logging.INFO)
@@ -374,15 +373,34 @@ def _perform_copy(destination_path, completion_marker):
 
     # The calling function `copy_gallery_utilities` already handles exceptions
     # that might occur during the copy operation. For Python 3.8+,
-    # copytree has dirs_exist_ok. For older versions,
-    # distutils.dir_util.copy_tree provides similar behavior.
+    # copytree has dirs_exist_ok. For older versions, we use a custom implementation.
     if sys.version_info >= (3, 8):
         shutil.copytree(source_path, destination_path, dirs_exist_ok=True)
     else:
-        copy_tree(source_path, destination_path)
+        # Custom implementation for older Python versions
+        _copy_tree_custom(source_path, destination_path)
     # Create a marker to indicate that the copy is complete.
     with open(completion_marker, 'w') as f:
         f.write('complete')
+
+
+def _copy_tree_custom(src, dst):
+    """
+    Custom implementation of copy_tree that works across all Python versions.
+    Recursively copies files and directories from src to dst, creating
+    directories as needed and overwriting existing files.
+    """
+    if not os.path.exists(dst):
+        os.makedirs(dst)
+    
+    for item in os.listdir(src):
+        src_item = os.path.join(src, item)
+        dst_item = os.path.join(dst, item)
+        
+        if os.path.isdir(src_item):
+            _copy_tree_custom(src_item, dst_item)
+        else:
+            shutil.copy2(src_item, dst_item)
 
 
 def close_log_handler(handler):
