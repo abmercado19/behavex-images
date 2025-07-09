@@ -1,6 +1,13 @@
 Version History
 ===============================================================================
 
+Version: 3.2.2
+-------------------------------------------------------------------------------
+
+ENHANCEMENTS:
+
+* Added comprehensive testing workflow to validate library installation across all supported Python versions (3.8-3.13) on Ubuntu, Windows, and macOS.
+
 Version: 3.2.1
 -------------------------------------------------------------------------------
 
