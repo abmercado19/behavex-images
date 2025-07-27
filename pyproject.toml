@@ -1,0 +1,54 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "behavex-images"
+version = "3.2.2"
+description = "BehaveX extension library to attach images to the test execution report."
+readme = "README.md"
+license = {text = "MIT"}
+authors = [
+    {name = "Hernan Rey", email = "hernanrey@gmail.com"},
+    {name = "Ana Mercado", email = "abmercado19@gmail.com"},
+]
+requires-python = ">=3.5"
+dependencies = [
+    "behave",
+    "behavex",
+    "pillow",
+    "filelock; python_version>='3.8'",
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.5",
+    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Testing",
+]
+
+[project.urls]
+Homepage = "https://github.com/abmercado19/behavex-images"
+Repository = "https://github.com/abmercado19/behavex-images"
+Issues = "https://github.com/abmercado19/behavex-images/issues"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+include = ["behavex_images*"]
+
+[tool.setuptools.package-data]
+"behavex_images" = ["**/*"] 

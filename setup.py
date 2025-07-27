@@ -20,7 +20,7 @@ setup(
     # Application name:
     name='behavex-images',
     # Version number (initial):
-    version='3.2.1',
+    version='3.2.2',
     license="MIT",
     # Application author details:
     author='Hernan Rey, Ana Mercado',
@@ -60,6 +60,8 @@ setup(
         'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: 3.10',
         'Programming Language :: Python :: 3.11',
+        'Programming Language :: Python :: 3.12',
+        'Programming Language :: Python :: 3.13',
         'Topic :: Software Development :: Testing',
     ],
 )
