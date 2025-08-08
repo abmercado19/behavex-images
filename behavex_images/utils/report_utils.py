@@ -9,6 +9,7 @@ from __future__ import absolute_import, print_function
 
 import os
 import re
+import logging
 from enum import Enum
 import xml.etree.ElementTree as ET
 
@@ -133,12 +134,18 @@ def dump_images_to_disk(context):
     Returns:
     None
     """
-    if not context.bhximgs_attached_images:
+    # Internal utility function - log but don't crash if context is None
+    if context is None:
+        logging.warning('[behavex-images] dump_images_to_disk called with None context - no images to dump')
         return
-    for key in context.bhximgs_attached_images:
+        
+    attached_images = getattr(context, 'bhximgs_attached_images', {})
+    if not attached_images:
+        return
+    for key in attached_images:
         write_image_binary_to_file(
-            context.bhximgs_attached_images[key]['name'],
-            context.bhximgs_attached_images[key]['img_stream'],
+            attached_images[key]['name'],
+            attached_images[key]['img_stream'],
         )
 
 
@@ -152,9 +159,15 @@ def get_captions(context):
     Returns:
     dict: A dictionary where the keys are the image filenames (without extension) and the values are the captions for the images.
     """
+    # Internal utility function - log but don't crash if context is None
+    if context is None:
+        logging.warning('[behavex-images] get_captions called with None context - returning empty captions')
+        return {}
+        
     captions = {}
-    for key in context.bhximgs_attached_images:
-        captions[key] = context.bhximgs_attached_images[key]['steps']
+    attached_images = getattr(context, 'bhximgs_attached_images', {})
+    for key in attached_images:
+        captions[key] = attached_images[key]['steps']
     return captions
 
 
@@ -191,24 +204,38 @@ def add_image_to_report_story(context):
     Returns:
     None
     """
-    if context.bhximgs_image_stream:
+    # Internal utility function - log but don't crash if context is None
+    if context is None:
+        logging.warning('[behavex-images] add_image_to_report_story called with None context - cannot add image to story')
+        return
+        
+    image_stream = getattr(context, 'bhximgs_image_stream', None)
+    if image_stream:
         step_line = getattr(context, 'bhximgs_current_step_line', 0)
-        key = f"{str(step_line).zfill(5)}{str(context.bhximgs_attached_images_idx).zfill(5)}"
+        images_idx = getattr(context, 'bhximgs_attached_images_idx', 0)
+        key = f"{str(step_line).zfill(5)}{str(images_idx).zfill(5)}"
         
         # Check if formatter is specified in context
         formatter = getattr(context, 'bhximgs_formatter', None)
         if formatter:
             # Extract scenario hash from the log_path (which is the scenario directory)
-            scenario_hash = os.path.basename(context.bhximgs_attached_images_folder)
+            attached_images_folder = getattr(context, 'bhximgs_attached_images_folder', '')
+            scenario_hash = os.path.basename(attached_images_folder)
             name = os.path.join(os.getenv('LOGS'), f"{scenario_hash}_{key}.png")
         else:
             # Original behavior - save in scenario folder
-            name = os.path.join(context.bhximgs_attached_images_folder, key) + '.png'
+            attached_images_folder = getattr(context, 'bhximgs_attached_images_folder', '')
+            name = os.path.join(attached_images_folder, key) + '.png'
             
+        # Ensure the attached_images dict exists
+        if not hasattr(context, 'bhximgs_attached_images'):
+            context.bhximgs_attached_images = {}
+            
+        previous_steps = getattr(context, 'bhximgs_previous_steps', [])
         context.bhximgs_attached_images[key] = {
-            'img_stream': context.bhximgs_image_stream,
+            'img_stream': image_stream,
             'name': name,
-            'steps': context.bhximgs_previous_steps[:],
+            'steps': previous_steps[:],
         }
 
 

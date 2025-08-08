@@ -38,7 +38,11 @@ def attach_image_binary(context, image_binary, header_text=None):
     Error: If the provided binary data is not a valid PNG or JPG image.
     Error: If it was not possible to add the image to the report.
     """
-    if "bhximgs_attachments_condition" not in context:
+    # Context should not be None when users call this function
+    if context is None:
+        raise ValueError('[behavex-images] Context is None - this function should be called from within a behave test step where context is available')
+        
+    if not hasattr(context, 'bhximgs_attachments_condition'):
         context.bhximgs_attachments_condition = AttachmentsCondition.ONLY_ON_FAILURE
     try:
         image_binary_format = image_format.get_image_format(image_binary)
@@ -57,19 +61,23 @@ def attach_image_binary(context, image_binary, header_text=None):
         logging.error('[behavex-images] The provided binary is not a valid image, or could not be converted to PNG: %s' % str(exception))
         return
     try:
-        if not context.bhximgs_image_hash or image_stream_hash != context.bhximgs_image_hash:
-            context.bhximgs_attached_images_idx += 1
+        current_hash = getattr(context, 'bhximgs_image_hash', None)
+        if not current_hash or image_stream_hash != current_hash:
+            context.bhximgs_attached_images_idx = getattr(context, 'bhximgs_attached_images_idx', 0) + 1
             context.bhximgs_previous_steps = []
         context.bhximgs_image_hash = image_stream_hash
         context.bhximgs_image_stream = image_binary
 
-        if not context.bhximgs_log_stream.closed:
+        log_stream = getattr(context, 'bhximgs_log_stream', None)
+        if log_stream and not log_stream.closed:
+            previous_steps = getattr(context, 'bhximgs_previous_steps', [])
             if header_text:
-                context.bhximgs_previous_steps.append(normalize_log(header_text, line_breaks=2))
-            for log_line in context.bhximgs_log_stream.getvalue().splitlines(True):
+                previous_steps.append(normalize_log(header_text, line_breaks=2))
+            for log_line in log_stream.getvalue().splitlines(True):
                 step = normalize_log(log_line)
-                context.bhximgs_previous_steps.append(step)
-            context.bhximgs_log_stream.truncate(0)
+                previous_steps.append(step)
+            context.bhximgs_previous_steps = previous_steps
+            log_stream.truncate(0)
         add_image_to_report_story(context)
     except Exception as exception:
         logging.error('[behavex-images] It was not possible to add the image to the report: %s' % str(exception))
@@ -113,10 +121,16 @@ def clean_all_attached_images(context):
     Returns:
     None
     """
+    # Context should not be None when users call this function
+    if context is None:
+        raise ValueError('[behavex-images] Context is None - this function should be called from within a behave test step where context is available')
+        
     context.bhximgs_attached_images = {}
     context.bhximgs_attached_images_idx = 0
     context.bhximgs_previous_steps = []
-    context.bhximgs_log_stream.truncate(0)
+    log_stream = getattr(context, 'bhximgs_log_stream', None)
+    if log_stream:
+        log_stream.truncate(0)
 
 
 def set_attachments_condition(context, attachments_condition: AttachmentsCondition):
@@ -130,4 +144,8 @@ def set_attachments_condition(context, attachments_condition: AttachmentsConditi
     Returns:
     None
     """
+    # Context should not be None when users call this function
+    if context is None:
+        raise ValueError('[behavex-images] Context is None - this function should be called from within a behave test step where context is available')
+        
     context.bhximgs_attachments_condition = attachments_condition
