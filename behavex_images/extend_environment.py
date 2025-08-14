@@ -360,7 +360,7 @@ def after_scenario(context, scenario):
         attachments_condition = getattr(context, 'bhximgs_attachments_condition', None)
         if (attachments_condition and
                 ((attachments_condition == AttachmentsCondition.ALWAYS) or
-                 (attachments_condition == AttachmentsCondition.ONLY_ON_FAILURE and getattr(scenario, 'status', None) == 'failed'))
+                 (attachments_condition == AttachmentsCondition.ONLY_ON_FAILURE and getattr(scenario, 'status', None) in ['failed', 'error']))
         ):
             # Always dump images to disk - they may be needed by the formatter
             report_utils.dump_images_to_disk(context)
