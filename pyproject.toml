@@ -12,7 +12,7 @@ authors = [
     {name = "Hernan Rey", email = "hernanrey@gmail.com"},
     {name = "Ana Mercado", email = "abmercado19@gmail.com"},
 ]
-requires-python = ">=3.5"
+requires-python = ">=3.8"
 dependencies = [
     "behavex",
     "behave",
