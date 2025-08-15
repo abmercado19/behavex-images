@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "behavex-images"
-version = "3.2.2"
+version = "3.3.1"
 description = "BehaveX extension library to attach images to the test execution report."
 readme = "README.md"
 license = {text = "MIT"}
@@ -12,10 +12,10 @@ authors = [
     {name = "Hernan Rey", email = "hernanrey@gmail.com"},
     {name = "Ana Mercado", email = "abmercado19@gmail.com"},
 ]
-requires-python = ">=3.5"
+requires-python = ">=3.8"
 dependencies = [
-    "behave",
     "behavex",
+    "behave",
     "pillow",
     "filelock; python_version>='3.8'",
 ]
@@ -27,9 +27,6 @@ classifiers = [
     "Operating System :: OS Independent",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.5",
-    "Programming Language :: Python :: 3.6",
-    "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",

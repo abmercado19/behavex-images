@@ -1,31 +1,38 @@
 # -*- coding: utf-8 -*-
+
+# Standard library imports
 import logging
 import os
 import shutil
 import sys
 import types
 
-# Configure filelock logging to reduce verbosity
-logging.getLogger("filelock").setLevel(logging.INFO)
+# Python 2/3 compatibility imports
+try:
+    from StringIO import StringIO
+except ImportError:
+    from io import StringIO
 
+# Third-party imports
 try:
     from filelock import FileLock
     HAS_FILELOCK = True
 except ImportError:
     HAS_FILELOCK = False
 
+import behave
 from behave.runner import ModelRunner
+
+# Local behavex imports
 from behavex import environment as bhx_benv
-from behavex.outputs.report_utils import normalize_filename
 from behavex.conf_mgr import get_param
+
+# Local behavex-images imports
 from behavex_images.image_attachments import AttachmentsCondition
 from behavex_images.utils import report_utils
 
-# cStringIO has been changed to StringIO or io
-try:
-    from StringIO import StringIO
-except ImportError:
-    from io import StringIO
+# Configure filelock logging to reduce verbosity
+logging.getLogger("filelock").setLevel(logging.INFO)
 
 hooks_already_set = False
 bhx_original_hooks = {}
@@ -33,109 +40,163 @@ bhx_original_hooks = {}
 
 def extend_behave_hooks():
     """
-    This function integrates behavex-images hooks with BehaveX's hook system.
-    
-    It uses a two-phase approach to ensure compatibility regardless of initialization order:
-    1. First stores references to BehaveX hooks (or sets up to capture them later)
-    2. Then creates wrapper functions that safely call both sets of hooks in the proper order
-    
-    This approach handles cases where BehaveX hasn't initialized its hooks yet and
-    prevents double execution of hooks.
-
-    Parameters:
-    None
-
-    Returns:
-    None
+    Extend Behave hooks with BehaveX hooks code.
     """
-    global hooks_already_set, bhx_original_hooks
+
+    global hooks_already_set
     
-    # Don't proceed if hooks are already set
-    if hooks_already_set:
-        return
-        
-    # Get reference to this module for calling hooks
+    # Detect behave version
+    behave_version = getattr(behave, '__version__', '1.2.6')
+    BEHAVE_VERSION = tuple(map(int, behave_version.split('.')[:2]))
+    
+    behave_run_hook = ModelRunner.run_hook
     behavex_images_env = sys.modules[__name__]
-    is_dry_run = True if os.environ.get('DRY_RUN', "false").lower() == "true" else False
-    
-    # Function to create a hook wrapper that will safely call both hooks in the right order
-    def create_hook_wrapper(hook_name, bhx_first=True):
-        """Create a wrapper for the specified hook type
-        
-        Args:
-            hook_name: The name of the hook (e.g., 'before_all')
-            bhx_first: Whether to call BehaveX's hook first (True) or behavex-images hook first (False)
-            
-        Returns:
-            A wrapper function that handles the proper hook execution order
-        """
-        # Get the behavex-images hook function
-        img_hook = getattr(behavex_images_env, hook_name, lambda *args: None)
-        
-        def wrapper(*args):
-            # Get the current BehaveX hook (which might have been set after our initialization)
-            orig_hook = bhx_original_hooks.get(hook_name)
-            if orig_hook is None:
-                # If we don't have a reference to the original, get it now
-                orig_hook = getattr(bhx_benv, hook_name, lambda *args: None)
-                bhx_original_hooks[hook_name] = orig_hook
-            
-            result = None
-            
-            try:
-                if bhx_first:
-                    # Call BehaveX hook first
-                    result = orig_hook(*args)
-                    
-                    # Then call behavex-images hook
-                    if not is_dry_run:
-                        img_hook(*args)
+    is_dry_run = get_param('dry_run')
+
+    def run_hook(self, name, context=None, *args):
+
+        # Behave version compatibility: handle different hook signatures
+        # Behave 1.2.6: run_hook(name, context, *args) where context is the actual context
+        # Behave 1.3.0: run_hook(name, hook_target, *args) where hook_target is Scenario/Step/Feature/etc.
+
+        actual_context = None
+        hook_target = None
+
+        try:
+            if BEHAVE_VERSION >= (1, 3):
+                # Behave 1.3.0+ behavior: context parameter is actually the hook target
+                if name in ('before_all', 'after_all'):
+                    # For before_all/after_all: context=None, get context from self
+                    actual_context = getattr(self, 'context', None) or context
                 else:
-                    # Call behavex-images hook first
-                    if not is_dry_run:
-                        img_hook(*args)
-                        
-                    # Then call BehaveX hook
-                    result = orig_hook(*args)
-            except Exception as ex:
-                bhx_benv._log_exception_and_continue(f'{hook_name} (behavex-images)', exception=ex)
-                
-                # If exception occurred before calling BehaveX hook, call it now
-                if not bhx_first and result is None:
-                    result = orig_hook(*args)
-                
-            return result
-            
-        return wrapper
-        
-    # Create wrappers for all hook types with the right execution order
-    hooks_to_wrap = {
-        # BehaveX hook first
-        'before_feature': True,
-        'before_scenario': True,
-        'before_step': True,
-        'after_step': True,
-        'after_scenario': True,
-        
-        # behavex-images hook first
-        'before_all': False,
-        'after_feature': False,
-        'after_all': False
-    }
-    
-    # Create and register all hook wrappers
-    for hook_name, bhx_first in hooks_to_wrap.items():
-        # Create wrapper function
-        wrapper = create_hook_wrapper(hook_name, bhx_first)
-        
-        # Save reference to current BehaveX hook function if it exists
-        if hasattr(bhx_benv, hook_name) and isinstance(getattr(bhx_benv, hook_name), types.FunctionType):
-            bhx_original_hooks[hook_name] = getattr(bhx_benv, hook_name)
-            
-        # Replace the BehaveX hook with our wrapper
-        setattr(bhx_benv, hook_name, wrapper)
-    
-    hooks_already_set = True
+                    # For other hooks: context parameter is the hook target
+                    hook_target = context
+                    actual_context = getattr(self, 'context', None)
+
+                    # If we can't get context from self, try to find it in args
+                    if actual_context is None:
+                        if args and hasattr(args[0], 'config'):
+                            actual_context = args[0]
+                        else:
+                            # Last resort fallback
+                            actual_context = context
+            else:
+                # Behave 1.2.6 behavior: context parameter is the actual context
+                actual_context = context
+                # For hooks other than before_all/after_all, hook_target is in args
+                if name not in ('before_all', 'after_all') and args:
+                    hook_target = args[0]
+                elif name in ('before_all', 'after_all'):
+                    # For before_all/after_all in 1.2.6, there might not be additional args
+                    hook_target = None
+
+                # Additional validation for Behave 1.2.6
+                if actual_context is None and args:
+                    # Sometimes context might be None, try to find it in args
+                    for arg in args:
+                        if hasattr(arg, 'config') or hasattr(arg, 'feature'):
+                            actual_context = arg
+                            break
+
+            # Call the original behave hook first (except for after hooks)
+            if name.startswith('before_') or name in ['before_tag', 'after_tag']:
+                # noinspection PyUnresolvedReferences
+                if not is_dry_run:
+                    try:
+                        behave_run_hook(self, name, context, *args)
+                    except Exception as hook_error:
+                        # Log but don't fail - some hooks might not be implemented in all versions
+                        _log_exception_and_continue(f'behave_run_hook({name}) - before/tag', hook_error)
+
+            # Call BehavEx hooks with proper arguments based on hook type
+            # Only proceed if we have a valid context
+            # NOTE: before_tag and after_tag hooks are not implemented in behavex-images
+            if actual_context is not None:
+                if name == 'before_all':
+                    behavex_images_env.before_all(actual_context)
+                elif name == 'before_feature':
+                    feature = hook_target
+                    # Validate feature object has expected attributes
+                    if feature and (hasattr(feature, 'name') or hasattr(feature, 'filename')):
+                        behavex_images_env.before_feature(actual_context, feature)
+                elif name == 'before_scenario':
+                    scenario = hook_target
+                    # Validate scenario object has expected attributes
+                    if scenario and hasattr(scenario, 'name'):
+                        behavex_images_env.before_scenario(actual_context, scenario)
+                elif name == 'before_step':
+                    step = hook_target
+                    # Validate step object has expected attributes
+                    if step and (hasattr(step, 'name') or hasattr(step, 'step_type')):
+                        behavex_images_env.before_step(actual_context, step)
+                # elif name == 'before_tag':
+                #     # NOT IMPLEMENTED: before_tag hook is not implemented in behavex-images
+                #     pass
+                # elif name == 'after_tag':
+                #     # NOT IMPLEMENTED: after_tag hook is not implemented in behavex-images
+                #     pass
+                elif name == 'after_step':
+                    step = hook_target
+                    # Validate step object has expected attributes
+                    if step and (hasattr(step, 'name') or hasattr(step, 'step_type')):
+                        behavex_images_env.after_step(actual_context, step)
+                elif name == 'after_scenario':
+                    scenario = hook_target
+                    # Validate scenario object has expected attributes
+                    if scenario and hasattr(scenario, 'name') and hasattr(scenario, 'status'):
+                        behavex_images_env.after_scenario(actual_context, scenario)
+                elif name == 'after_feature':
+                    feature = hook_target
+                    # More lenient validation for after_feature
+                    if feature and (hasattr(feature, 'name') or hasattr(feature, 'filename')):
+                        behavex_images_env.after_feature(actual_context, feature)
+                elif name == 'after_all':
+                    behavex_images_env.after_all(actual_context)
+
+            # Call the original behave hook after for after hooks
+            if name.startswith('after_') and name not in ['after_tag']:
+                # noinspection PyUnresolvedReferences
+                if not is_dry_run:
+                    try:
+                        behave_run_hook(self, name, context, *args)
+                    except Exception as hook_error:
+                        # Log but don't fail - some hooks might not be implemented in all versions
+                        _log_exception_and_continue(f'behave_run_hook({name}) - after', hook_error)
+
+        except Exception as exception:
+            # Log hook errors but don't break execution
+            _log_exception_and_continue(f'run_hook({name})', exception)
+            # Still call the original behave hook as fallback, but only if not in dry run
+            if not is_dry_run:
+                try:
+                    behave_run_hook(self, name, context, *args)
+                except Exception:
+                    pass  # Avoid infinite recursion
+
+    if not hooks_already_set:
+        hooks_already_set = True
+        ModelRunner.run_hook = run_hook
+
+        # BEHAVE 1.3.0 COMPATIBILITY: Also override run_hook_with_capture
+        # since all hooks are called via run_hook_with_capture in 1.3.0
+        if BEHAVE_VERSION >= (1, 3):
+            def run_hook_with_capture(self, hook_name, *args, **kwargs):
+                # BEHAVE 1.3.0 COMPATIBILITY: Route ALL hooks through BehaveX run_hook
+                # In behave 1.3.0, all hooks go through run_hook_with_capture first,
+                # but we need them to go through BehaveX's run_hook for proper error handling
+                # and consistent behavior across all hook types
+
+                # For before_all/after_all: no hook target, context should be None
+                # For other hooks: first arg is the hook target (feature, scenario, step)
+                if hook_name in ('before_all', 'after_all'):
+                    return run_hook(self, hook_name, None, *args)
+                else:
+                    # Pass the first argument as the hook target
+                    hook_target = args[0] if args else None
+                    remaining_args = args[1:] if len(args) > 1 else ()
+                    return run_hook(self, hook_name, hook_target, *remaining_args)
+
+            ModelRunner.run_hook_with_capture = run_hook_with_capture
 
 
 def before_all(context):
@@ -152,12 +213,18 @@ def before_all(context):
     None
     """
     try:
+        # Context should not be None in normal behave execution
+        if context is None:
+            _log_exception_and_continue('before_all (behavex-images)', 
+                                       Exception("Context is None - this may indicate a behave version compatibility issue or test setup problem"))
+            return
+            
         # Initialize the flag - by default we need screenshot utils unless a formatter is specified
         context.bhximgs_needs_screenshot_utils = not bool(get_param('formatter', None))
-        if context.bhximgs_needs_screenshot_utils:
+        if getattr(context, 'bhximgs_needs_screenshot_utils', False):
             copy_gallery_utilities()
     except Exception as ex:
-        bhx_benv._log_exception_and_continue('before_all (behavex-images)', exception=ex)
+        _log_exception_and_continue('before_all (behavex-images)', ex)
 
 
 def before_feature(context, feature):
@@ -190,6 +257,12 @@ def before_scenario(context, scenario):
     None
     """
     try:
+        # Context should not be None in normal behave execution
+        if context is None:
+            _log_exception_and_continue('before_scenario (behavex-images)', 
+                                       Exception("Context is None - this may indicate a behave version compatibility issue or test setup problem"))
+            return
+            
         # Check for formatter in command line arguments
         context.bhximgs_formatter = get_param('formatter', None)
         # Note: bhximgs_needs_screenshot_utils is already set in before_all()
@@ -207,9 +280,9 @@ def before_scenario(context, scenario):
         context.bhximgs_step_log_handler.setFormatter(bhx_benv._get_log_formatter())
         logging.getLogger().addHandler(context.bhximgs_step_log_handler)
         # Set the attached images folder to the scenario log path
-        context.bhximgs_attached_images_folder = context.log_path
+        context.bhximgs_attached_images_folder = getattr(context, 'log_path', None)
     except Exception as ex:
-        bhx_benv._log_exception_and_continue('before_scenario (behavex-images)', exception=ex)
+        _log_exception_and_continue('before_scenario (behavex-images)', ex)
 
 
 def before_step(context, step):
@@ -227,13 +300,23 @@ def before_step(context, step):
     None
     """
     try:
+        # Context and step should not be None in normal behave execution
+        if context is None:
+            _log_exception_and_continue('before_step (behavex-images)', 
+                                       Exception("Context is None - this may indicate a behave version compatibility issue or test setup problem"))
+            return
+        if step is None:
+            _log_exception_and_continue('before_step (behavex-images)', 
+                                       Exception("Step is None - this may indicate a behave version compatibility issue or test setup problem"))
+            return
+            
         if hasattr(step, 'filename') and '.feature' in step.filename:
             context.bhximgs_last_feature_line = step.line if hasattr(step, 'line') else 0
             context.bhximgs_current_step_line = context.bhximgs_last_feature_line
         else:
-            context.bhximgs_current_step_line = context.bhximgs_last_feature_line
+            context.bhximgs_current_step_line = getattr(context, 'bhximgs_last_feature_line', 0)
     except Exception as ex:
-        bhx_benv._log_exception_and_continue('before_step (behavex-images)', exception=ex)
+        _log_exception_and_continue('before_step (behavex-images)', ex)
 
 
 def after_step(context, step):
@@ -268,24 +351,38 @@ def after_scenario(context, scenario):
     None
     """
     try:
-        if ("bhximgs_attachments_condition" in context and
-                ((context.bhximgs_attachments_condition == AttachmentsCondition.ALWAYS) or
-                 (context.bhximgs_attachments_condition == AttachmentsCondition.ONLY_ON_FAILURE and scenario.status == 'failed'))
+        # Context should not be None in normal behave execution
+        if context is None:
+            _log_exception_and_continue('after_scenario (behavex-images)', 
+                                       Exception("Context is None - this may indicate a behave version compatibility issue or test setup problem"))
+            return
+            
+        attachments_condition = getattr(context, 'bhximgs_attachments_condition', None)
+        if (attachments_condition and
+                ((attachments_condition == AttachmentsCondition.ALWAYS) or
+                 (attachments_condition == AttachmentsCondition.ONLY_ON_FAILURE and getattr(scenario, 'status', None) in ['failed', 'error']))
         ):
             # Always dump images to disk - they may be needed by the formatter
             report_utils.dump_images_to_disk(context)
             
             # Only create gallery if screenshot utilities are needed
-            if context.bhximgs_needs_screenshot_utils:
+            if getattr(context, 'bhximgs_needs_screenshot_utils', False):
                 captions = report_utils.get_captions(context)
-                report_utils.create_gallery(
-                    context.bhximgs_attached_images_folder,
-                    title=scenario.name,
-                    captions=captions
-                )
-        close_log_handler(context.bhximgs_step_log_handler)
+                attached_images_folder = getattr(context, 'bhximgs_attached_images_folder', None)
+                if attached_images_folder:
+                    report_utils.create_gallery(
+                        attached_images_folder,
+                        title=getattr(scenario, 'name', 'Scenario'),
+                        captions=captions
+                    )
     except Exception as ex:
-        bhx_benv._log_exception_and_continue('after_scenario (behavex-images)', exception=ex)
+        _log_exception_and_continue('after_scenario (behavex-images)', ex)
+    finally:
+        # Safe cleanup - this should always run even if context was None
+        if context is not None:
+            log_handler = getattr(context, 'bhximgs_step_log_handler', None)
+            if log_handler:
+                close_log_handler(log_handler)
 
 
 def after_feature(context, feature):
@@ -416,9 +513,19 @@ def close_log_handler(handler):
     None
     """
     if handler is not None:
-        if hasattr(handler, 'stream') and hasattr(handler.stream, 'close'):
-            handler.stream.close()
-        logging.getLogger().removeHandler(handler)
+        try:
+            if hasattr(handler, 'stream') and hasattr(handler.stream, 'close'):
+                handler.stream.close()
+            logging.getLogger().removeHandler(handler)
+        except Exception as ex:
+            _log_exception_and_continue('close_log_handler (behavex-images)', ex)
+
+
+def _log_exception_and_continue(module, exception):
+    """Logs any exception that occurs without raising it"""
+    error_message = f"Unexpected error in '{module}' function:"
+    logging.error(error_message)
+    logging.error(exception)
 
 
 # This line of code calls the function 'extend_behave_hooks'.

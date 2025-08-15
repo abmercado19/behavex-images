@@ -6,8 +6,8 @@ name = "pypi"
 [packages]
 behave = "*"
 behavex = "*"
-numpy = "*"
 pillow = "*"
+build = "*"
 
 [dev-packages]
 

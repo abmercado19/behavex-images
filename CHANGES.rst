@@ -1,6 +1,21 @@
 Version History
 ===============================================================================
 
+Version: 3.3.0
+-------------------------------------------------------------------------------
+
+ENHANCEMENTS:
+
+* Added compatibility with latest behave versions while maintaining backward compatibility with behave 1.2.6.
+* Improved ModelRunner.run_hook wrapper to handle the signature change in behave 1.3.0 where hook_target parameter replaced context parameter.
+* Enhanced error handling throughout the library:
+  
+  - User-facing functions now raise ValueError with descriptive messages instead of silently failing when called with None context
+  - Hook functions log detailed error messages to help diagnose behave version compatibility issues
+  - Internal utility functions log warnings for better debugging while gracefully handling edge cases
+
+* Added comprehensive context extraction logic to properly handle both behave 1.2.6 and 1.3.0 hook signatures.
+
 Version: 3.2.2
 -------------------------------------------------------------------------------
 
