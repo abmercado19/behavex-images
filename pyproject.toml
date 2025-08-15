@@ -7,7 +7,7 @@ name = "behavex-images"
 version = "3.3.0"
 description = "BehaveX extension library to attach images to the test execution report."
 readme = "README.md"
-license = "MIT"
+license = {text = "MIT"}
 authors = [
     {name = "Hernan Rey", email = "hernanrey@gmail.com"},
     {name = "Ana Mercado", email = "abmercado19@gmail.com"},
@@ -23,6 +23,7 @@ classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Environment :: Console",
     "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
